@@ -14,7 +14,7 @@ repositories {
     jcenter()
 }
 
-version "0.3.0"
+version "0.3.2"
 group = "com.github.dkharrat.nexusdialog"
 
 android {
@@ -61,46 +61,5 @@ if (project.hasProperty('signing')) {
     signing {
         required { has("release") && gradle.taskGraph.hasTask("uploadArchives") }
         sign configurations.archives
-    }
-}
-
-if (project.hasProperty('sonatypeUsername')) {
-    uploadArchives {
-        repositories.mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: sonatypeRepo) {
-                authentication(userName: sonatypeUsername, password: sonatypePassword)
-            }
-
-            pom.project {
-                name 'NexusDialog'
-                packaging 'aar'
-                description 'Simple Form Builder for Android'
-                url 'https://github.com/dkharrat/nexus-dialog'
-
-                scm {
-                    url 'scm:git@github.com:dkharrat/nexus-dialog.git'
-                    connection 'scm:git@github.com:dkharat/nexus-dialog.git'
-                    developerConnection 'scm:git@github.com:dkharrat/nexus-dialog.git'
-                }
-
-                licenses {
-                    license {
-                        name 'The Apache Software License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                        distribution 'repo'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id 'dkharrat'
-                        name 'Dia Kharrat'
-                        email 'dkharrat@gmail.com'
-                    }
-                }
-            }
-        }
     }
 }
