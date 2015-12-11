@@ -1,0 +1,53 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:1.5.0'
+        classpath 'com.googlecode.jarjar:jarjar:1.3'
+    }
+}
+
+configurations.create('jarjarJar')
+configurations.jarjarJar.transitive = false
+
+configurations {
+    jarjarJar
+}
+
+task copyJarJarJar(type: Copy) {
+    from configurations.jarjarJar
+    into '../jarjar'
+}
+
+apply plugin: 'com.android.library'
+preBuild.dependsOn copyJarJarJar
+
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.1"
+
+    defaultConfig {
+        minSdkVersion 14
+        targetSdkVersion 23
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    jarjarJar 'com.googlecode.jarjar:jarjar:1.3'
+}

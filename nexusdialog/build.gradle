@@ -16,8 +16,8 @@ configurations {
     all*.exclude group: 'swingui', module: 'swingui'
 }
 
-apply plugin: 'net.vrallev.jarjar'
 apply plugin: 'com.android.library'
+apply plugin: 'net.vrallev.jarjar'
 apply plugin: 'signing'
 
 repositories {
@@ -57,20 +57,23 @@ android {
     }
 }
 
+//preBuild.shouldRunAfter ':jarjarlinks'
+
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+
+    // TODO: force this to complete before evaluating jar path
+    compile project(':jarjarlinks')
 
     configurations {
         all*.exclude group: 'junit', module: 'junit'
         all*.exclude group: 'commons-logging', module: 'commons-logging'
     }
-
     // hibernate deps missing on android; use jarjar to include on javax
     jarjar 'javax.xml.bind:jaxb-api:2.2.12'
     jarjar 'javax.xml.stream:stax-api:1.0-2'
-
     // validator lib -- use latest version still on Java 7
-    jarjar ('org.hibernate:hibernate-validator:5.1.3.Final') {
+    jarjar('org.hibernate:hibernate-validator:5.1.3.Final') {
         exclude module: 'test-utils'
         exclude module: 'tck-runner'
         exclude module: 'intergration'
@@ -80,7 +83,6 @@ dependencies {
 
         exclude group: 'javax.validation', module: 'validation-api'
     }
-
     // validation deps
     jarjar 'com.fasterxml:classmate:1.0.0'
     jarjar 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
@@ -88,9 +90,7 @@ dependencies {
     jarjar 'org.glassfish.web:javax.el:2.2.6'
     jarjar 'javax.enterprise:cdi-api:1.2'
     jarjar 'javax.xml.bind:activation:1.0.2'
-
     compile 'javax.validation:validation-api:1.1.0.Final'
-
     compile 'com.android.support:appcompat-v7:23.1.1'
 }
 
@@ -112,7 +112,7 @@ if (project.hasProperty('signing')) {
 
 jarjar {
     // required, path to the executable .jar file
-    jarJarFile 'jarjar-1.4.jar'
+    jarJarFile '../jarjar/jarjar-1.3.jar'
 
     // optional, the rules for the jarjar tool
     rules = [
