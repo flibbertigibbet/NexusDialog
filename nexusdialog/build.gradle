@@ -1,17 +1,28 @@
 buildscript {
     repositories {
         jcenter()
+        mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.1.1'
+        classpath 'com.android.tools.build:gradle:1.5.0'
+        classpath 'net.vrallev.gradle:jarjar-gradle:1.1.0'
     }
 }
+
+configurations {
+    all*.exclude group: 'commons-logging', module: 'commons-logging'
+    all*.exclude group: 'ant', module: 'ant'
+    all*.exclude group: 'awtui', module: 'awtui'
+    all*.exclude group: 'swingui', module: 'swingui'
+}
+
+apply plugin: 'net.vrallev.jarjar'
 apply plugin: 'com.android.library'
-apply plugin: 'maven'
 apply plugin: 'signing'
 
 repositories {
     jcenter()
+    mavenCentral()
 }
 
 version "0.3.2"
@@ -19,11 +30,24 @@ group = "com.github.dkharrat.nexusdialog"
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "23"
+    buildToolsVersion "23.0.1"
+
+    // Must specify individually all duplicated files from libraries to exclude or pickFirst
+    packagingOptions {
+        exclude 'NOTICE'
+        exclude 'NOTICE.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/ASL2.0'
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/DEPENDENCIES.txt'
+    }
 
     defaultConfig {
-        minSdkVersion 10
-        targetSdkVersion 21
+        minSdkVersion 14
+        targetSdkVersion 23
     }
     buildTypes {
         release {
@@ -31,21 +55,43 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-
-    libraryVariants.all { variant ->
-        task("generate${variant.name}Javadoc", type: Javadoc) {
-            description "Generates Javadoc for $variant.name."
-            source = variant.javaCompile.source
-            ext.androidJar = "${android.plugin.sdkHandler.sdkFolder}/platforms/${android.compileSdkVersion}/android.jar"
-            classpath = files(variant.javaCompile.classpath.files) + files(ext.androidJar)
-            exclude '**/R.html', '**/R.*.html', '**/BuildConfig.java'
-        }
-    }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:23.0.0'
+
+    configurations {
+        all*.exclude group: 'junit', module: 'junit'
+        all*.exclude group: 'commons-logging', module: 'commons-logging'
+    }
+
+    // hibernate deps missing on android; use jarjar to include on javax
+    jarjar 'javax.xml.bind:jaxb-api:2.2.12'
+    jarjar 'javax.xml.stream:stax-api:1.0-2'
+
+    // validator lib -- use latest version still on Java 7
+    jarjar ('org.hibernate:hibernate-validator:5.1.3.Final') {
+        exclude module: 'test-utils'
+        exclude module: 'tck-runner'
+        exclude module: 'intergration'
+        exclude module: 'annotation-processor'
+        exclude module: 'performance'
+        exclude module: 'distribution'
+
+        exclude group: 'javax.validation', module: 'validation-api'
+    }
+
+    // validation deps
+    jarjar 'com.fasterxml:classmate:1.0.0'
+    jarjar 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
+    jarjar 'javax.el:javax.el-api:2.2.4'
+    jarjar 'org.glassfish.web:javax.el:2.2.6'
+    jarjar 'javax.enterprise:cdi-api:1.2'
+    jarjar 'javax.xml.bind:activation:1.0.2'
+
+    compile 'javax.validation:validation-api:1.1.0.Final'
+
+    compile 'com.android.support:appcompat-v7:23.1.1'
 }
 
 task sourcesJar(type: Jar) {
@@ -62,4 +108,27 @@ if (project.hasProperty('signing')) {
         required { has("release") && gradle.taskGraph.hasTask("uploadArchives") }
         sign configurations.archives
     }
+}
+
+jarjar {
+    // required, path to the executable .jar file
+    jarJarFile 'jarjar-1.4.jar'
+
+    // optional, the rules for the jarjar tool
+    rules = [
+            'rule javax.xml.stream.** ext.javax.xml.stream.@1',
+            'rule javax.xml.bind.** ext.javax.xml.bind.@1'
+    ]
+
+    // optional, exclude files from the dependency .jar files
+    srcExcludes = ['META-INF/**']
+
+    // optional, default is build_repackaged.jar, the result .jar file name
+    outputName "build_repackaged.jar"
+
+    // optional, default is libs, the directory of the result .jar
+    outputDir 'libs'
+
+    // optional, default is false
+    ignoreJarJarResult false
 }

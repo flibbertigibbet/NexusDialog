@@ -210,7 +210,6 @@ public class SearchableSelectionController extends LabeledFieldController {
             });
 
             builder.setView(searchableList);
-            builder.setInverseBackgroundForced(true);
             selectionDialog = builder.create();
             selectionDialog.setOnDismissListener(new OnDismissListener() {
 

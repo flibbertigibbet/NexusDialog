@@ -32,6 +32,13 @@ public abstract class FormModel extends Fragment {
     protected abstract Object getBackingValue(String name);
 
     /**
+     * Return backing model object.
+     *
+     * @return model object holding the data for this form
+     */
+    public abstract Object getBackingModelObject();
+
+    /**
      * Returns the value for the specified field name.
      *
      * @param name  the field name

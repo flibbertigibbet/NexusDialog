@@ -22,7 +22,7 @@ public abstract class FormActivity extends FragmentActivity {
         setContentView(R.layout.form_activity);
         getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_ADJUST_RESIZE | LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
-        formController = new FormController(this);
+        formController = createFormController();
         initForm();
 
         FragmentManager fm = getSupportFragmentManager();
@@ -32,7 +32,7 @@ public abstract class FormActivity extends FragmentActivity {
             retainedModel = formController.getModel();
             fm.beginTransaction().add(retainedModel, MODEL_BUNDLE_KEY).commit();
         }
-        formController.setModel(retainedModel);
+
         recreateViews();
     }
 
@@ -43,6 +43,12 @@ public abstract class FormActivity extends FragmentActivity {
         ViewGroup containerView = (ViewGroup) findViewById(R.id.form_elements_container);
         formController.recreateViews(containerView);
     }
+
+    /**
+     * Responsible for creating a formController with the model object.
+     * formController = new FormController(this, someObj);
+     */
+    protected abstract FormController createFormController();
 
     /**
      * An abstract method that must be overridden by subclasses where the form fields are initialized.

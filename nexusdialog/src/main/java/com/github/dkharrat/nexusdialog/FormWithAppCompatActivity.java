@@ -10,7 +10,7 @@ import android.view.WindowManager.LayoutParams;
  * <code>FormWithAppCompatActivity</code> is provides a default Activity implementation for using NexusDialog. If you'd
  * like the Activity to be based on the standard Android <code>Activity</code>, you can use {@link FormActivity}
  */
-public abstract class FormWithAppCompatActivity extends AppCompatActivity {
+public abstract class FormWithAppCompatActivity<T> extends AppCompatActivity {
     private static final String MODEL_BUNDLE_KEY = "nd_model";
     private FormController formController;
 
@@ -21,7 +21,7 @@ public abstract class FormWithAppCompatActivity extends AppCompatActivity {
         setContentView(R.layout.form_activity);
         getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_ADJUST_RESIZE | LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
-        formController = new FormController(this);
+        formController = createFormController();
         initForm();
 
         FragmentManager fm = getSupportFragmentManager();
@@ -31,7 +31,7 @@ public abstract class FormWithAppCompatActivity extends AppCompatActivity {
             retainedModel = formController.getModel();
             fm.beginTransaction().add(retainedModel, MODEL_BUNDLE_KEY).commit();
         }
-        formController.setModel(retainedModel);
+
         recreateViews();
     }
 
@@ -42,6 +42,12 @@ public abstract class FormWithAppCompatActivity extends AppCompatActivity {
         ViewGroup containerView = (ViewGroup) findViewById(R.id.form_elements_container);
         formController.recreateViews(containerView);
     }
+
+    /**
+     * Responsible for creating a formController with the model object.
+     * formController = new FormController(this, someObj);
+     */
+    protected abstract FormController createFormController();
 
     /**
      * An abstract method that must be overridden by subclasses where the form fields are initialized.
