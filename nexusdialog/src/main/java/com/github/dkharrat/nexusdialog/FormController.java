@@ -30,12 +30,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FormController {
     private final List<FormSectionController> sectionControllers = new ArrayList<FormSectionController>();
 
+    private final Object modelObj;
+    private FormModel model;
+
     private final Context context;
     private ValidationErrorDisplay validationErrorDisplay;
     private static final AtomicInteger nextGeneratedViewId = new AtomicInteger(1);
 
-    public FormController(Context context) {
+    public FormController(Context context, Object modelObj) {
         this.context = context;
+        this.modelObj = modelObj;
+        setModel();
         setValidationErrorsDisplayMethod(new PerFieldValidationErrorDisplay(context, this));
     }
 
@@ -49,12 +54,60 @@ public class FormController {
     }
 
     /**
+     * Returns the associated model object (containing the data) for this form.
+     *
+     * @return Model object for this form
+     */
+    protected Object getModelObject() {
+        return modelObj;
+    }
+
+    /**
+     * Instantiates form model based on the modelObj class
+     *
+     * @return FormModel that gets and sets publicly accessible fields on the model class
+     */
+    private FormModel createFormModel() {
+        final Object modelObject = getModelObject();
+        final Class modelObjectClass = modelObject.getClass();
+
+        return new FormModel() {
+            @Override
+            protected void setBackingValue(String name, Object newValue) {
+                try {
+                    modelObjectClass.getField(name).set(modelObject, newValue);
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (NoSuchFieldException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            protected Object getBackingValue(String name) {
+                try {
+                    return modelObjectClass.getField(name).get(modelObject);
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (NoSuchFieldException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            public Object getBackingModelObject() {
+                return modelObject;
+            }
+        };
+    }
+
+    /**
      * Sets the model to use for this form
      *
-     * @param formModel the model to use
      */
-    public void setModel(FormModel formModel) {
-        this.model = formModel;
+    private void setModel() {
+        this.model = createFormModel();
         registerFormModelListener();
     }
 
@@ -241,21 +294,6 @@ public class FormController {
         // now that the view is setup, register a listener of the model to update the view on changes
         registerFormModelListener();
     }
-
-    private FormModel model = new FormModel() {
-
-        private final Map<String,Object> data = new HashMap<String,Object>();
-
-        @Override
-        public Object getBackingValue(String name) {
-            return data.get(name);
-        }
-
-        @Override
-        public void setBackingValue(String name, Object value) {
-            data.put(name, value);
-        }
-    };
 
     private PropertyChangeListener modelListener = new PropertyChangeListener() {
         @Override public void propertyChange(PropertyChangeEvent event) {

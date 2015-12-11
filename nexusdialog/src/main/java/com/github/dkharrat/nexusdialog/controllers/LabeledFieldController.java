@@ -8,12 +8,19 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.github.dkharrat.nexusdialog.FormElementController;
+import com.github.dkharrat.nexusdialog.FormModel;
 import com.github.dkharrat.nexusdialog.R;
+import com.github.dkharrat.nexusdialog.validations.HibernateValidatorInstance;
+import com.github.dkharrat.nexusdialog.validations.HibernationError;
 import com.github.dkharrat.nexusdialog.validations.RequiredField;
 import com.github.dkharrat.nexusdialog.validations.ValidationError;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
 
 /**
  * An abstract class that represents a generic form field with an associated label.
@@ -84,13 +91,24 @@ public abstract class LabeledFieldController extends FormElementController {
      * @return  a list containing all the validation errors
      */
     public List<ValidationError> validateInput() {
-        List<ValidationError> errors = new ArrayList<ValidationError>();
+        List<ValidationError> errors = new ArrayList<>();
+        String name = getName();
+        String label = getLabel();
+        final FormModel model = this.getModel();
+        Object value = model.getValue(name);
 
-        if (isRequired()) {
-            Object value = getModel().getValue(getName());
-            if (value == null || (value instanceof String && TextUtils.isEmpty((String)value))) {
-                errors.add(new RequiredField(getName(), getLabel()));
+        if (value != null) {
+            // cannot run Hibernate Validator on null object
+            Validator validator = HibernateValidatorInstance.getValidator();
+            Object modelObject = model.getBackingModelObject();
+
+            Set<ConstraintViolation<Object>> violations = validator.validateProperty(modelObject, name);
+            for (ConstraintViolation violation: violations) {
+                errors.add(new HibernationError(name, label, violation));
             }
+        } else if (isRequired()) {
+            // have null required field
+            errors.add(new RequiredField(name, label));
         }
 
         return errors;

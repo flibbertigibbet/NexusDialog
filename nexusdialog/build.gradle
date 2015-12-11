@@ -89,6 +89,8 @@ dependencies {
     jarjar 'javax.enterprise:cdi-api:1.2'
     jarjar 'javax.xml.bind:activation:1.0.2'
 
+    compile 'javax.validation:validation-api:1.1.0.Final'
+
     compile 'com.android.support:appcompat-v7:23.1.1'
 }
 
