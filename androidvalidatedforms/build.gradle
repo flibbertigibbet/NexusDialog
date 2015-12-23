@@ -30,7 +30,7 @@ group = "com.azavea.androidvalidatedforms"
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "23.0.1"
+    buildToolsVersion "23.0.2"
 
     // Must specify individually all duplicated files from libraries to exclude or pickFirst
     packagingOptions {
@@ -58,6 +58,9 @@ android {
 }
 
 dependencies {
+    // keep non-jarjar'ed dependencies in separate module in order to exclude them from .aar
+    provided project(':libraries')
+
     compile fileTree(dir: 'libs', include: ['*.jar'])
 
     configurations {
@@ -81,17 +84,13 @@ dependencies {
         exclude group: 'javax.validation', module: 'validation-api'
     }
 
-    // validation deps
+    // Hibernate Validator dependencies
     jarjar 'com.fasterxml:classmate:1.0.0'
     jarjar 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
     jarjar 'javax.el:javax.el-api:2.2.4'
     jarjar 'org.glassfish.web:javax.el:2.2.6'
     jarjar 'javax.enterprise:cdi-api:1.2'
     jarjar 'javax.xml.bind:activation:1.0.2'
-
-    compile 'javax.validation:validation-api:1.1.0.Final'
-
-    compile 'com.android.support:appcompat-v7:23.1.1'
 }
 
 task sourcesJar(type: Jar) {
