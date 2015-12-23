@@ -107,11 +107,10 @@
 ####### hibernate validator
 
 # hang onto dynamic things
-# TODO: refine
--keep class org.hibernate.validator.** { public *; }
--keep interface org.hibernate.validator.** { public *; }
+-keep class org.hibernate.validator.** { *; }
+-keep interface org.hibernate.validator.** { *; }
 -keepnames class org.hibernate.validator.**
-#-keepclassmembers class org.hibernate.** { *; }
+-keepclassmembers class org.hibernate.** { *; }
 
 -keep class javax.el.** { public *; }
 -keep interface javax.el.** { public *; }

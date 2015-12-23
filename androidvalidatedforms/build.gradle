@@ -25,12 +25,12 @@ repositories {
     mavenCentral()
 }
 
-version "1.0.1"
+version "1.0.2"
 group = "com.azavea.androidvalidatedforms"
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "23.0.1"
+    buildToolsVersion "23.0.2"
 
     // Must specify individually all duplicated files from libraries to exclude or pickFirst
     packagingOptions {
