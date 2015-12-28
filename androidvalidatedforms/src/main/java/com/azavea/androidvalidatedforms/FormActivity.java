@@ -3,8 +3,10 @@ package com.azavea.androidvalidatedforms;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.os.Bundle;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager.LayoutParams;
+import android.widget.ProgressBar;
 
 /**
  * <code>FormActivity</code> is provides a default Activity implementation for using NexusDialog. It provides simple APIs to quickly
@@ -14,12 +16,16 @@ import android.view.WindowManager.LayoutParams;
 public abstract class FormActivity extends FragmentActivity {
     private static final String MODEL_BUNDLE_KEY = "nd_model";
     private FormController formController;
+    private ProgressBar progressBar;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.form_activity);
+        progressBar = (ProgressBar)findViewById(R.id.form_progress);
+        showProgressBar();
+
         getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_ADJUST_RESIZE | LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
         formController = createFormController();
@@ -34,6 +40,15 @@ public abstract class FormActivity extends FragmentActivity {
         }
 
         recreateViews();
+        hideProgressBar();
+    }
+
+    protected void showProgressBar() {
+        progressBar.setVisibility(View.VISIBLE);
+    }
+
+    protected void hideProgressBar() {
+        progressBar.setVisibility(View.GONE);
     }
 
     /**

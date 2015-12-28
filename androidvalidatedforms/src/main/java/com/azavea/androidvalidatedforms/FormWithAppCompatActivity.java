@@ -3,22 +3,28 @@ package com.azavea.androidvalidatedforms;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager.LayoutParams;
+import android.widget.ProgressBar;
 
 /**
  * <code>FormWithAppCompatActivity</code> is provides a default Activity implementation for using NexusDialog. If you'd
  * like the Activity to be based on the standard Android <code>Activity</code>, you can use {@link FormActivity}
  */
 public abstract class FormWithAppCompatActivity<T> extends AppCompatActivity {
-    private static final String MODEL_BUNDLE_KEY = "nd_model";
+    private static final String MODEL_BUNDLE_KEY = "android_validated_forms_model";
     private FormController formController;
+    private ProgressBar progressBar;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.form_activity);
+        progressBar = (ProgressBar)findViewById(R.id.form_progress);
+        showProgressBar();
+
         getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_ADJUST_RESIZE | LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
         formController = createFormController();
@@ -33,6 +39,15 @@ public abstract class FormWithAppCompatActivity<T> extends AppCompatActivity {
         }
 
         recreateViews();
+        hideProgressBar();
+    }
+
+    protected void showProgressBar() {
+        progressBar.setVisibility(View.VISIBLE);
+    }
+
+    protected void hideProgressBar() {
+        progressBar.setVisibility(View.GONE);
     }
 
     /**
