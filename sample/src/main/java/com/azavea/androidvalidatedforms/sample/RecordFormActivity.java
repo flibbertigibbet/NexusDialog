@@ -71,4 +71,9 @@ public class RecordFormActivity extends FormWithAppCompatActivity {
 
         return section;
     }
+
+    @Override
+    public void validationComplete(boolean isValid) {
+        Log.d("RecordFormActivity", "Valid? : " + String.valueOf(isValid));
+    }
 }

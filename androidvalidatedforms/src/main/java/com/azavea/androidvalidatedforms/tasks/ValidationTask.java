@@ -4,6 +4,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.azavea.androidvalidatedforms.FormActivityBase;
+import com.azavea.androidvalidatedforms.FormController;
 
 import java.lang.ref.WeakReference;
 
@@ -12,7 +13,11 @@ import java.lang.ref.WeakReference;
  *
  * Created by kathrynkillebrew on 12/29/15.
  */
-public class ValidationTask extends AsyncTask<Void, Void, Void> {
+public class ValidationTask extends AsyncTask<Void, Void, Boolean> {
+
+    public interface ValidationCallback {
+        void validationComplete(boolean isValid);
+    }
 
     WeakReference<FormActivityBase> activity;
 
@@ -32,23 +37,26 @@ public class ValidationTask extends AsyncTask<Void, Void, Void> {
     }
 
     @Override
-    protected Void doInBackground(Void... params) {
+    protected Boolean doInBackground(Void... params) {
         FormActivityBase activityBase = activity.get();
         if (activityBase != null) {
-            activityBase.getFormController().validateInput();
+            FormController controller = activityBase.getFormController();
+            return controller.isValidInput();
         }
-        return null;
+        return false;
     }
 
     @Override
-    protected void onPostExecute(Void aVoid) {
-        super.onPostExecute(aVoid);
+    protected void onPostExecute(Boolean isValid) {
+        super.onPostExecute(isValid);
 
         FormActivityBase activityBase = activity.get();
         if (activityBase != null) {
             activityBase.getFormController().showValidationErrors();
             activityBase.showProgress(false);
             Log.d("ValidationTask", "Validation done!");
+            // call back to activity to let it know if form valid or not
+            activityBase.validationComplete(isValid);
         }
     }
 }

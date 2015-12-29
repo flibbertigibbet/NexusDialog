@@ -205,6 +205,7 @@ public class SearchableSelectionController extends LabeledFieldController {
                     }
                     getModel().setValue(getName(), selection);
                     editText.setText(selection);
+                    setNeedsValidation();
                     selectionDialog.dismiss();
                 }
             });
@@ -230,6 +231,7 @@ public class SearchableSelectionController extends LabeledFieldController {
     private void refresh(EditText editText) {
         String value = (String)getModel().getValue(getName());
         editText.setText(value != null ? value : "");
+        setNeedsValidation();
     }
 
     @Override

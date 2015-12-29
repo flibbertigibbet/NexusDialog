@@ -105,6 +105,8 @@ public class CheckBoxController extends LabeledFieldController {
                     )
             );
         }
+
+        setNeedsValidation();
     }
 
     /**

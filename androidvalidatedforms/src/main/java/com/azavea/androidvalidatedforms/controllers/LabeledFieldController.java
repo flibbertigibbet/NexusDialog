@@ -29,6 +29,8 @@ public abstract class LabeledFieldController extends FormElementController {
     private boolean required;
     private View fieldView;
     private TextView errorView;
+    private boolean needsValidation;
+    private List<ValidationError> errors;
 
     /**
      * Creates a labeled field.
@@ -44,6 +46,7 @@ public abstract class LabeledFieldController extends FormElementController {
         super(ctx, name);
         this.labelText = labelText;
         required = isRequired;
+        needsValidation = true;
     }
 
     /**
@@ -61,8 +64,17 @@ public abstract class LabeledFieldController extends FormElementController {
      * @param required  if true, this field checks for a non-empty or non-null value upon validation. Otherwise, this
      *                  field can be empty.
      */
-    public void setIsRequired(boolean required) {
+    protected void setIsRequired(boolean required) {
         this.required = required;
+    }
+
+    /**
+     * Marks field as needing to be validated. Flag cleared when validation is run.
+     *
+     * Call this in implementations whenever the field value changes.
+     */
+    public void setNeedsValidation() {
+        this.needsValidation = true;
     }
 
     /**
@@ -90,7 +102,13 @@ public abstract class LabeledFieldController extends FormElementController {
      * @return  a list containing all the validation errors
      */
     public List<ValidationError> validateInput() {
-        List<ValidationError> errors = new ArrayList<>();
+
+        // only validate field if it has changed since last validation
+        if (!needsValidation) {
+            return errors;
+        }
+
+        errors = new ArrayList<>();
         String name = getName();
         String label = getLabel();
         final FormModel model = this.getModel();
@@ -110,6 +128,7 @@ public abstract class LabeledFieldController extends FormElementController {
             errors.add(new RequiredField(name, label));
         }
 
+        needsValidation = false;
         return errors;
     }
 
