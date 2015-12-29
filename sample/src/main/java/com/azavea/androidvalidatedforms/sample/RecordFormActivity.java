@@ -21,6 +21,11 @@ public class RecordFormActivity extends FormWithAppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void displayForm() {
+        super.displayForm();
 
         ViewGroup containerView = (ViewGroup) findViewById(R.id.form_elements_container);
 
@@ -41,12 +46,12 @@ public class RecordFormActivity extends FormWithAppCompatActivity {
     }
 
     @Override
-    protected FormController createFormController() {
+    public FormController createFormController() {
         return new FormController(this, new TestModel());
     }
 
     @Override
-    protected void initForm() {
+    public void initForm() {
         final FormController formController = getFormController();
         formController.addSection(addSectionModel());
     }
@@ -76,7 +81,7 @@ public class RecordFormActivity extends FormWithAppCompatActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            showProgressBar();
+            showProgress(true);
             controller.resetValidationErrors();
         }
 
@@ -90,7 +95,7 @@ public class RecordFormActivity extends FormWithAppCompatActivity {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             controller.showValidationErrors();
-            hideProgressBar();
+            showProgress(false);
             Log.d("ValidationTask", "Validation done!");
         }
     }

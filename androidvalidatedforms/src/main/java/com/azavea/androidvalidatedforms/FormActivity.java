@@ -1,54 +1,40 @@
 package com.azavea.androidvalidatedforms;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.annotation.TargetApi;
+import android.os.Build;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager.LayoutParams;
-import android.widget.ProgressBar;
+
+import com.azavea.androidvalidatedforms.tasks.DisplayFormTask;
 
 /**
  * <code>FormActivity</code> is provides a default Activity implementation for using NexusDialog. It provides simple APIs to quickly
  * create and manage form fields. If you'd like the Activity to be based on <code>AppCompatActivity</code>, you can use
  * {@link FormWithAppCompatActivity}
  */
-public abstract class FormActivity extends FragmentActivity {
-    private static final String MODEL_BUNDLE_KEY = "nd_model";
+public abstract class FormActivity extends FragmentActivity implements FormActivityBase {
+    private static final String MODEL_BUNDLE_KEY = "android_validated_forms_model";
     private FormController formController;
-    private ProgressBar progressBar;
+    private View progressBar;
+    private View scrollView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.form_activity);
-        progressBar = (ProgressBar)findViewById(R.id.form_progress);
-        showProgressBar();
+        progressBar = findViewById(R.id.form_progress);
+        scrollView = findViewById(R.id.form_scrollview);
 
         getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_ADJUST_RESIZE | LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
-        formController = createFormController();
-        initForm();
-
-        FragmentManager fm = getSupportFragmentManager();
-        FormModel retainedModel = (FormModel) fm.findFragmentByTag(MODEL_BUNDLE_KEY);
-
-        if (retainedModel == null) {
-            retainedModel = formController.getModel();
-            fm.beginTransaction().add(retainedModel, MODEL_BUNDLE_KEY).commit();
-        }
-
-        recreateViews();
-        hideProgressBar();
-    }
-
-    protected void showProgressBar() {
-        progressBar.setVisibility(View.VISIBLE);
-    }
-
-    protected void hideProgressBar() {
-        progressBar.setVisibility(View.GONE);
+        new DisplayFormTask(this).execute();
     }
 
     /**
@@ -56,24 +42,42 @@ public abstract class FormActivity extends FragmentActivity {
      */
     protected void recreateViews() {
         ViewGroup containerView = (ViewGroup) findViewById(R.id.form_elements_container);
-        formController.recreateViews(containerView);
+        getFormController().recreateViews(containerView);
+    }
+
+    /**
+     *
+     */
+    public void displayForm() {
+        FragmentManager fm = getSupportFragmentManager();
+        FormModel retainedModel = (FormModel) fm.findFragmentByTag(MODEL_BUNDLE_KEY);
+
+        if (retainedModel == null) {
+            retainedModel = getFormController().getModel();
+            fm.beginTransaction().add(retainedModel, MODEL_BUNDLE_KEY).commit();
+        }
+
+        recreateViews();
     }
 
     /**
      * Responsible for creating a formController with the model object.
      * formController = new FormController(this, someObj);
      */
-    protected abstract FormController createFormController();
+    public abstract FormController createFormController();
 
     /**
      * An abstract method that must be overridden by subclasses where the form fields are initialized.
      */
-    protected abstract void initForm();
+    public abstract void initForm();
 
     /**
      * Returns the associated form controller
      */
     public FormController getFormController() {
+        if (formController == null) {
+            formController = createFormController();
+        }
         return formController;
     }
 
@@ -81,6 +85,42 @@ public abstract class FormActivity extends FragmentActivity {
      * Returns the associated form model
      */
     public FormModel getModel() {
-        return formController.getModel();
+        return getFormController().getModel();
+    }
+
+    /**
+     * Shows the progress UI and hides the form. Taken from login form sample.
+     */
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+    public void showProgress(final boolean show) {
+        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
+        // for very easy animations. If available, use these APIs to fade-in
+        // the progress spinner.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+
+            scrollView.setVisibility(show ? View.GONE : View.VISIBLE);
+            scrollView.animate().setDuration(shortAnimTime).alpha(
+                    show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    scrollView.setVisibility(show ? View.GONE : View.VISIBLE);
+                }
+            });
+
+            progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
+            progressBar.animate().setDuration(shortAnimTime).alpha(
+                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
+                }
+            });
+        } else {
+            // The ViewPropertyAnimator APIs are not available, so simply show
+            // and hide the relevant UI components.
+            progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
+            scrollView.setVisibility(show ? View.GONE : View.VISIBLE);
+        }
     }
 }
