@@ -1,6 +1,5 @@
 package com.azavea.androidvalidatedforms.sample;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.util.Log;
@@ -13,6 +12,7 @@ import com.azavea.androidvalidatedforms.FormWithAppCompatActivity;
 import com.azavea.androidvalidatedforms.controllers.EditTextController;
 import com.azavea.androidvalidatedforms.controllers.FormSectionController;
 import com.azavea.androidvalidatedforms.controllers.SelectionController;
+import com.azavea.androidvalidatedforms.tasks.ValidationTask;
 
 import java.util.ArrayList;
 
@@ -35,12 +35,12 @@ public class RecordFormActivity extends FormWithAppCompatActivity {
         goBtn.setText(getString(R.string.record_save_button));
         containerView.addView(goBtn);
 
+        final RecordFormActivity thisActivity = this;
         goBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Log.d("RecordFormActivity", "Button clicked");
-                FormController controller = getFormController();
-                new ValidateTask(controller).execute();
+                new ValidationTask(thisActivity).execute();
             }
         });
     }
@@ -71,33 +71,4 @@ public class RecordFormActivity extends FormWithAppCompatActivity {
 
         return section;
     }
-
-    private class ValidateTask extends AsyncTask<Void, Void, Void> {
-
-        FormController controller;
-        public ValidateTask(FormController controller) {
-            this.controller = controller;
-        }
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            showProgress(true);
-            controller.resetValidationErrors();
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            controller.validateInput();
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            controller.showValidationErrors();
-            showProgress(false);
-            Log.d("ValidationTask", "Validation done!");
-        }
-    }
-
 }
