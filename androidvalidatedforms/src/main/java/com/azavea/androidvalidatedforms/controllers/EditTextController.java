@@ -160,6 +160,7 @@ public class EditTextController extends LabeledFieldController {
             @Override
             public void afterTextChanged(Editable editable) {
                 getModel().setValue(getName(), editText.getText().toString());
+                setNeedsValidation();
             }
         });
 
@@ -169,8 +170,10 @@ public class EditTextController extends LabeledFieldController {
     private void refresh(EditText editText) {
         Object value = getModel().getValue(getName());
         String valueStr = value != null ? value.toString() : "";
-        if (!valueStr.equals(editText.getText().toString()))
+        if (!valueStr.equals(editText.getText().toString())) {
             editText.setText(valueStr);
+            setNeedsValidation();
+        }
     }
 
     @Override

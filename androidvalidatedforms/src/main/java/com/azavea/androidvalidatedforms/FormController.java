@@ -1,6 +1,7 @@
 package com.azavea.androidvalidatedforms;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -223,6 +224,8 @@ public class FormController {
      * @return a list of validation errors of the form's input
      */
     public List<ValidationError> validateInput() {
+        Log.d("FormController", "Running validateInput");
+
         List<ValidationError> errors = new ArrayList<ValidationError>();
 
         for (FormSectionController section : getSections()) {

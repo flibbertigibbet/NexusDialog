@@ -127,6 +127,7 @@ public class DatePickerController extends LabeledFieldController {
     private void refresh(EditText editText) {
         Date value = (Date)getModel().getValue(getName());
         editText.setText(value != null ? displayFormat.format(value) : "");
+        setNeedsValidation();
     }
 
     public void refresh() {

@@ -41,6 +41,7 @@ public class ValueController extends LabeledFieldController {
     private void refresh(TextView textView) {
         Object value = getModel().getValue(getName());
         textView.setText(value != null ? value.toString() : "");
+        setNeedsValidation();
     }
 
     public void refresh() {

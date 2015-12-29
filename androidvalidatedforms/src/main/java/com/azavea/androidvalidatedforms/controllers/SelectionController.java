@@ -127,6 +127,7 @@ public class SelectionController extends LabeledFieldController {
         }
 
         spinner.setSelection(selectionIndex);
+        setNeedsValidation();
     }
 
     @Override
