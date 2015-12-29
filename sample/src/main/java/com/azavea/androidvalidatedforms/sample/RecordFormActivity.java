@@ -58,8 +58,8 @@ public class RecordFormActivity extends FormWithAppCompatActivity {
 
     private FormSectionController addSectionModel() {
         FormSectionController section = new FormSectionController(this, "Test Model");
-        section.addElement(new EditTextController(this, "FirstName", "first name", "first name"));
-        section.addElement(new EditTextController(this, "LastName", "last name", "last name"));
+        section.addElement(new EditTextController(this, "FirstName", "first name", "first name", true));
+        section.addElement(new EditTextController(this, "LastName", "last name", "last name", true));
 
         ArrayList<String> colors = new ArrayList<>(3);
         colors.add("red");
