@@ -6,6 +6,7 @@
     android:orientation="vertical"
     android:weightSum="1">
 
+    <!-- Loader -->
     <ProgressBar
         android:id="@+id/form_progress"
         style="?android:attr/progressBarStyleLarge"
@@ -33,9 +34,6 @@
         </LinearLayout>
 
     </ScrollView>
-
-    <!-- Loader -->
-
 
 </LinearLayout>
 

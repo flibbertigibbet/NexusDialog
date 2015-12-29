@@ -1,1 +1,1 @@
-include ':androidvalidatedforms'
+include ':androidvalidatedforms', ':sample'
