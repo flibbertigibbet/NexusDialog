@@ -52,6 +52,7 @@ public class RecordFormActivity extends FormWithAppCompatActivity {
 
     @Override
     public void initForm() {
+        // getFormController will call createFormController, if it does not yet exist
         final FormController formController = getFormController();
         formController.addSection(addSectionModel());
     }
