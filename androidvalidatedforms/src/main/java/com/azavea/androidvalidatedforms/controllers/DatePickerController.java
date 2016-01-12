@@ -4,10 +4,10 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
-import java.util.TimeZone;
 
 import android.app.DatePickerDialog;
 import android.app.DatePickerDialog.OnDateSetListener;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
@@ -17,6 +17,7 @@ import android.view.View.OnClickListener;
 import android.view.View.OnFocusChangeListener;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.TimePicker;
 
 import com.azavea.androidvalidatedforms.FormController;
 
@@ -30,8 +31,10 @@ public class DatePickerController extends LabeledFieldController {
     private final int editTextId = FormController.generateViewId();
 
     private DatePickerDialog datePickerDialog = null;
+    private TimePickerDialog timePickerDialog = null;
     private final SimpleDateFormat displayFormat;
-    private final TimeZone timeZone;
+    private final Calendar calendar;
+    private boolean showTimePicker = false;
 
     /**
      * Constructs a new instance of a date picker field.
@@ -45,7 +48,8 @@ public class DatePickerController extends LabeledFieldController {
     public DatePickerController(Context ctx, String name, String labelText, boolean isRequired, SimpleDateFormat displayFormat) {
         super(ctx, name, labelText, isRequired);
         this.displayFormat = displayFormat;
-        this.timeZone = displayFormat.getTimeZone();
+        this.calendar = Calendar.getInstance(Locale.getDefault());
+        this.calendar.setTimeZone(displayFormat.getTimeZone());
     }
 
     /**
@@ -56,6 +60,37 @@ public class DatePickerController extends LabeledFieldController {
      */
     public DatePickerController(Context context, String name, String labelText) {
         this(context, name, labelText, false, new SimpleDateFormat("MMM d, yyyy", Locale.getDefault()));
+    }
+
+    /**
+     * Constructor that takes parameter to show time picker.
+     *
+     * @param context           the Android context
+     * @param name              the name of the field
+     * @param labelText         the label to display beside the field. Set to {@code null} to not show a label.
+     * @param isRequired        indicates if the field is required or not
+     * @param showTimePicker    if true, show time picker after date component dismissed
+     */
+    public DatePickerController(Context context, String name, String labelText, boolean isRequired, boolean showTimePicker) {
+        this(context, name, labelText, isRequired, new SimpleDateFormat("MMM d, yyyy", Locale.getDefault()));
+        this.showTimePicker = showTimePicker;
+    }
+
+    /**
+     * Constructs a new instance of a date picker field, that optionally also displays a time picker.
+     *
+     * @param ctx               the Android context
+     * @param name              the name of the field
+     * @param labelText         the label to display beside the field. Set to {@code null} to not show a label.
+     * @param isRequired        indicates if the field is required or not
+     * @param displayFormat     the format of the date to show in the text box when a date is set
+     * @param showTimePicker    if true, display a time picker after the date picker dismisses
+     */
+    public DatePickerController(Context ctx, String name, String labelText, boolean isRequired,
+                                SimpleDateFormat displayFormat, boolean showTimePicker) {
+
+        this(ctx, name, labelText, isRequired, displayFormat);
+        this.showTimePicker = showTimePicker;
     }
 
     @Override
@@ -93,15 +128,12 @@ public class DatePickerController extends LabeledFieldController {
             if (date == null) {
                 date = new Date();
             }
-            Calendar calendar = Calendar.getInstance(Locale.getDefault());
-            calendar.setTimeZone(timeZone);
+
             calendar.setTime(date);
 
             datePickerDialog = new DatePickerDialog(context, new OnDateSetListener() {
                 @Override
                 public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                    Calendar calendar = Calendar.getInstance(Locale.getDefault());
-                    calendar.setTimeZone(timeZone);
                     calendar.set(year, monthOfYear, dayOfMonth);
                     getModel().setValue(getName(), calendar.getTime());
                     editText.setText(displayFormat.format(calendar.getTime()));
@@ -113,10 +145,44 @@ public class DatePickerController extends LabeledFieldController {
                 @Override
                 public void onDismiss(DialogInterface dialog) {
                     datePickerDialog = null;
+                    if (showTimePicker) {
+                        showTimePickerDialog(context, editText);
+                    }
                 }
             });
 
             datePickerDialog.show();
+        }
+    }
+
+    private void showTimePickerDialog(final Context context, final EditText editText) {
+        // don't show dialog again if it's already being shown
+        if (timePickerDialog == null) {
+            Date date = (Date)getModel().getValue(getName());
+            if (date == null) {
+                date = new Date();
+            }
+
+            calendar.setTime(date);
+
+            timePickerDialog = new TimePickerDialog(context, new TimePickerDialog.OnTimeSetListener() {
+                @Override
+                public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                    calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                    calendar.set(Calendar.MINUTE, minute);
+                    getModel().setValue(getName(), calendar.getTime());
+                    editText.setText(displayFormat.format(calendar.getTime()));
+                }
+            }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), android.text.format.DateFormat.is24HourFormat(context));
+
+            timePickerDialog.setOnDismissListener(new OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    timePickerDialog = null;
+                }
+            });
+
+            timePickerDialog.show();
         }
     }
 

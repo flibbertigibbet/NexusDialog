@@ -1,5 +1,7 @@
 package com.azavea.androidvalidatedforms.sample;
 
+import java.util.Date;
+
 import javax.validation.constraints.Size;
 
 /**
@@ -16,4 +18,6 @@ public class TestModel {
     public String LastName;
 
     public String FavoriteColor;
+
+    public Date When;
 }

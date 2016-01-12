@@ -9,6 +9,7 @@ import android.widget.Button;
 
 import com.azavea.androidvalidatedforms.FormController;
 import com.azavea.androidvalidatedforms.FormWithAppCompatActivity;
+import com.azavea.androidvalidatedforms.controllers.DatePickerController;
 import com.azavea.androidvalidatedforms.controllers.EditTextController;
 import com.azavea.androidvalidatedforms.controllers.FormSectionController;
 import com.azavea.androidvalidatedforms.controllers.SelectionController;
@@ -69,6 +70,8 @@ public class RecordFormActivity extends FormWithAppCompatActivity {
 
         section.addElement(new SelectionController(this, "FavoriteColor", "favorite color",
                 true, "Select", colors, colors));
+
+        section.addElement(new DatePickerController(this, "When", "Some date", true, true));
 
         return section;
     }
