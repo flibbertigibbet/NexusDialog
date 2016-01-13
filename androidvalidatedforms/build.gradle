@@ -26,7 +26,7 @@ repositories {
     mavenCentral()
 }
 
-version "1.0.6"
+version "1.0.7"
 group = "com.azavea.androidvalidatedforms"
 
 android {
@@ -75,11 +75,11 @@ dependencies {
         all*.exclude group: 'commons-logging', module: 'commons-logging'
     }
 
-    // hibernate deps missing on android; use jarjar to include on javax
+    // hibernate dependencies missing on android; use jarjar to include on javax
     jarjar 'javax.xml.bind:jaxb-api:2.2.12'
     jarjar 'javax.xml.stream:stax-api:1.0-2'
 
-    // validator lib -- use latest version still on Java 7
+    // validator -- use latest version still on Java 7
     jarjar ('org.hibernate:hibernate-validator:5.1.3.Final') {
         exclude module: 'test-utils'
         exclude module: 'tck-runner'
@@ -91,7 +91,7 @@ dependencies {
         exclude group: 'javax.validation', module: 'validation-api'
     }
 
-    // validation deps
+    // validation dependencies
     jarjar 'com.fasterxml:classmate:1.0.0'
     jarjar 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
     jarjar 'javax.el:javax.el-api:2.2.4'
