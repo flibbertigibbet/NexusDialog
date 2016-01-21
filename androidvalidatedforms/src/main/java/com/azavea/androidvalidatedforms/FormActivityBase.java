@@ -9,6 +9,10 @@ import com.azavea.androidvalidatedforms.tasks.ValidationTask;
  */
 public interface FormActivityBase extends ValidationTask.ValidationCallback {
 
+    interface FormReadyListener {
+        void formReadyCallback();
+    }
+
     FormModel getModel();
 
     FormController getFormController();
@@ -16,6 +20,12 @@ public interface FormActivityBase extends ValidationTask.ValidationCallback {
     void initForm();
 
     void displayForm();
+
+    boolean isFormReady();
+
+    void formIsReady();
+
+    void setFormReadyListener(FormReadyListener listener);
 
     FormController createFormController();
 

@@ -48,6 +48,7 @@ public class DisplayFormTask extends AsyncTask<Void, Void, Void> {
             form.showProgress(false);
             form.displayForm();
             Log.d("DisplayTask", "Form loaded");
+            form.formIsReady();
         }
     }
 }
