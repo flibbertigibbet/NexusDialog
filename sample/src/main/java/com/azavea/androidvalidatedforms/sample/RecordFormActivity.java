@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import com.azavea.androidvalidatedforms.FormActivityBase;
 import com.azavea.androidvalidatedforms.FormController;
 import com.azavea.androidvalidatedforms.FormWithAppCompatActivity;
 import com.azavea.androidvalidatedforms.controllers.DatePickerController;
@@ -17,11 +18,12 @@ import com.azavea.androidvalidatedforms.tasks.ValidationTask;
 
 import java.util.ArrayList;
 
-public class RecordFormActivity extends FormWithAppCompatActivity {
+public class RecordFormActivity extends FormWithAppCompatActivity implements FormActivityBase.FormReadyListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setFormReadyListener(this);
     }
 
     @Override
@@ -79,5 +81,10 @@ public class RecordFormActivity extends FormWithAppCompatActivity {
     @Override
     public void validationComplete(boolean isValid) {
         Log.d("RecordFormActivity", "Valid? : " + String.valueOf(isValid));
+    }
+
+    @Override
+    public void formReadyCallback() {
+        Log.d("SampleForm", "In form ready callback");
     }
 }

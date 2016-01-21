@@ -23,6 +23,9 @@ public abstract class FormWithAppCompatActivity extends AppCompatActivity implem
     private View progressBar;
     private View scrollView;
 
+    private boolean formReady;
+    private FormReadyListener formReadyListener;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,6 +36,7 @@ public abstract class FormWithAppCompatActivity extends AppCompatActivity implem
 
         getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_ADJUST_RESIZE | LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
+        formReady = false;
         new DisplayFormTask(this).execute();
     }
 
@@ -43,10 +47,7 @@ public abstract class FormWithAppCompatActivity extends AppCompatActivity implem
         ViewGroup containerView = (ViewGroup) findViewById(R.id.form_elements_container);
         getFormController().recreateViews(containerView);
     }
-
-    /**
-     *
-     */
+    
     public void displayForm() {
         FragmentManager fm = getSupportFragmentManager();
         FormModel retainedModel = (FormModel) fm.findFragmentByTag(MODEL_BUNDLE_KEY);
@@ -57,6 +58,22 @@ public abstract class FormWithAppCompatActivity extends AppCompatActivity implem
         }
 
         recreateViews();
+    }
+
+    public boolean isFormReady() {
+        return formReady;
+    }
+
+    public void formIsReady() {
+        this.formReady = true;
+
+        if (formReadyListener != null) {
+            formReadyListener.formReadyCallback();
+        }
+    }
+
+    public void setFormReadyListener(FormReadyListener listener) {
+        formReadyListener = listener;
     }
 
     /**

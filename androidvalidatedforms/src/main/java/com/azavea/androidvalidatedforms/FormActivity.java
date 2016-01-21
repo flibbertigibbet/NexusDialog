@@ -24,6 +24,9 @@ public abstract class FormActivity extends FragmentActivity implements FormActiv
     private View progressBar;
     private View scrollView;
 
+    private boolean formReady;
+    private FormReadyListener formReadyListener;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,6 +37,7 @@ public abstract class FormActivity extends FragmentActivity implements FormActiv
 
         getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_ADJUST_RESIZE | LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
+        formReady = false;
         new DisplayFormTask(this).execute();
     }
 
@@ -58,6 +62,22 @@ public abstract class FormActivity extends FragmentActivity implements FormActiv
         }
 
         recreateViews();
+    }
+
+    public boolean isFormReady() {
+        return formReady;
+    }
+
+    public void formIsReady() {
+        this.formReady = true;
+
+        if (formReadyListener != null) {
+            formReadyListener.formReadyCallback();
+        }
+    }
+
+    public void setFormReadyListener(FormReadyListener listener) {
+        formReadyListener = listener;
     }
 
     /**
