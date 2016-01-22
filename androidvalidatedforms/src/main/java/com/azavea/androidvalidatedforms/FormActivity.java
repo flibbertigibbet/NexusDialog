@@ -27,11 +27,14 @@ public abstract class FormActivity extends FragmentActivity implements FormActiv
     private boolean formReady;
     private FormReadyListener formReadyListener;
 
+    // form layout may be overridden, if it contains the expected components with matching IDs
+    protected int formLayout = R.layout.form_activity;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.form_activity);
+        setContentView(formLayout);
         progressBar = findViewById(R.id.form_progress);
         scrollView = findViewById(R.id.form_scrollview);
 
