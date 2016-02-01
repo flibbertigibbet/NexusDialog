@@ -3,15 +3,20 @@ package com.azavea.androidvalidatedforms;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.content.Intent;
 import android.os.Build;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager.LayoutParams;
 
 import com.azavea.androidvalidatedforms.tasks.DisplayFormTask;
+
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
 
 /**
  * <code>FormActivity</code> is provides a default Activity implementation for using NexusDialog. It provides simple APIs to quickly
@@ -26,6 +31,7 @@ public abstract class FormActivity extends FragmentActivity implements FormActiv
 
     private boolean formReady;
     private FormReadyListener formReadyListener;
+    private HashMap<Integer, WeakReference<IntentResultListener>> intentListeners;
 
     // form layout may be overridden, if it contains the expected components with matching IDs
     protected int formLayout = R.layout.form_activity;
@@ -41,6 +47,7 @@ public abstract class FormActivity extends FragmentActivity implements FormActiv
         getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_ADJUST_RESIZE | LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
         formReady = false;
+        intentListeners = new HashMap<>();
         new DisplayFormTask(this).execute();
     }
 
@@ -144,6 +151,25 @@ public abstract class FormActivity extends FragmentActivity implements FormActiv
             // and hide the relevant UI components.
             progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
             scrollView.setVisibility(show ? View.GONE : View.VISIBLE);
+        }
+    }
+
+    @Override
+    public void launchIntent(Intent intent, int requestCode, IntentResultListener listener) {
+        intentListeners.put(requestCode, new WeakReference<>(listener));
+        startActivityForResult(intent, requestCode);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        WeakReference<IntentResultListener> listenerReference = intentListeners.get(requestCode);
+        if (listenerReference != null) {
+            IntentResultListener listener = listenerReference.get();
+            if (listener != null) {
+                listener.gotIntentResult(requestCode, resultCode, data);
+            }
         }
     }
 }
