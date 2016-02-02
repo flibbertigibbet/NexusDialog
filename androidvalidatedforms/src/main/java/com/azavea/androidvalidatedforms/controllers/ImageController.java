@@ -8,21 +8,27 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 
 import com.azavea.androidvalidatedforms.FormActivityBase;
 import com.azavea.androidvalidatedforms.FormController;
 import com.azavea.androidvalidatedforms.IntentResultListener;
+import com.azavea.androidvalidatedforms.R;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,8 +50,10 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
     private static final String LOG_LABEL = "ImageControl";
 
     private final int imageButtonId = FormController.generateViewId();
+    private final int imageViewId = FormController.generateViewId();
+    private final int containerId = FormController.generateViewId();
 
-    private ImageButton imageButton;
+    private ImageView imageView;
 
     private static final int CAMERA_REQUEST = 11;
     private static final int FILE_REQUEST = 22;
@@ -62,12 +70,19 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
     protected View createFieldView() {
         Context context = getContext();
 
-        imageButton = new ImageButton(context);
+        LinearLayout container = new LinearLayout(context);
+        container.setId(containerId);
+        LinearLayout.LayoutParams containerParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        container.setLayoutParams(containerParams);
+
+        ImageButton imageButton = new ImageButton(context);
         imageButton.setId(imageButtonId);
         imageButton.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        imageButton.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        imageButton.setMaxHeight(300);
+        LinearLayout.LayoutParams imageButtonLayoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        imageButtonLayoutParams.gravity = Gravity.CENTER | Gravity.BOTTOM;
+        imageButton.setLayoutParams(imageButtonLayoutParams);
         imageButton.setImageDrawable(ContextCompat.getDrawable(context, android.R.drawable.ic_menu_camera));
+        container.addView(imageButton);
 
         imageButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -77,7 +92,24 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
             }
         });
 
-        return imageButton;
+        imageView = new ImageView(context);
+        imageView.setId(imageViewId);
+        imageView.setMaxHeight(600);
+        imageView.setMinimumHeight(300);
+        imageView.setMinimumWidth(200);
+        imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+
+        imageView.setImageDrawable(ContextCompat.getDrawable(context, android.R.drawable.ic_menu_camera));
+
+        LinearLayout.LayoutParams imageViewLayoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        imageViewLayoutParams.gravity = Gravity.CENTER | Gravity.TOP;
+        imageView.setLayoutParams(imageViewLayoutParams);
+
+        container.addView(imageView);
+
+        return container;
     }
 
     @Override
@@ -106,15 +138,22 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
                         try {
                             // tell camera intent where to save the photo
                             File photoFile = createImageFile();
-                            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+
+                            // if external media is not mounted and that is where images go,
+                            // the camera will display an appropriate message when opened
+                            // without EXTRA_OUTPUT set
+
+                            if (photoFile != null) {
+                                intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+                            }
                             caller.launchIntent(intent, CAMERA_REQUEST, ImageController.this);
                         } catch (IOException e) {
                             Log.e(LOG_LABEL, "Could not create file to save image into");
                             e.printStackTrace();
                         }
                     } else {
-                        // TODO: handle
-                        Log.e(LOG_LABEL, "Device has no camera!");
+                        // should be handled with app requirements
+                        Log.e(LOG_LABEL, "Device has no camera! Require camera in your AndroidManifest.xml");
                     }
                 } else if (items[item].equals("Choose from Library")) {
                     Intent intent = new Intent(
@@ -141,15 +180,18 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
 
         if (requestCode == CAMERA_REQUEST) {
             // TODO: store image path to model
-            Log.d(LOG_LABEL, "full image saved to " + currentPhotoPath);
 
-            // update image gallery to include the new pic
-            Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-            mediaScanIntent.setData(currentPhotoPath);
-            getContext().sendBroadcast(mediaScanIntent);
+            if (currentPhotoPath != null) {
+                // camera saved image to external media
+                Log.d(LOG_LABEL, "full image saved to " + currentPhotoPath);
 
-            setDownscaledImageFromFilePath(imageButton, currentPhotoPath.getPath());
+                // update image gallery to include the new pic
+                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                mediaScanIntent.setData(currentPhotoPath);
+                getContext().sendBroadcast(mediaScanIntent);
 
+                setDownscaledImageFromFilePath(imageView, currentPhotoPath.getPath(), 200, 200);
+            }
         } else if (requestCode == FILE_REQUEST) {
             Uri imageUri = resultData.getData();
             String[] projection = {MediaStore.MediaColumns.DATA};
@@ -161,40 +203,44 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
             cursor.close();
             Log.d(LOG_LABEL, "Have image path: " + imagePath);
 
-            setDownscaledImageFromFilePath(imageButton, imagePath);
+            setDownscaledImageFromFilePath(imageView, imagePath, 200, 200);
         } else {
             Log.w(LOG_LABEL, "got unrecognized intent result");
         }
     }
 
+    /**
+     * Create a file to use for storing a photo taken by the camera.
+     *
+     * @return File created in media directory, in a subdirectory that is the app name
+     * @throws IOException
+     */
     private File createImageFile() throws IOException {
-        //File directory = getContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-
         String appName = getContext().getApplicationInfo().loadLabel(getContext().getPackageManager()).toString();
-        Log.d(LOG_LABEL, "App name is: " + appName);
 
-        if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-            // TODO: deal
-            Log.e(LOG_LABEL, "No external media");
-        }
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            File picturePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
 
-        File picturePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+            File mediaStorageDir = new File(picturePath, appName);
 
-        File mediaStorageDir = new File(picturePath, appName);
-
-        if (!mediaStorageDir.exists()) {
-            if (!mediaStorageDir.mkdirs()) {
-                Log.d(LOG_LABEL, "failed to create directory");
-                return null;
+            if (!mediaStorageDir.exists()) {
+                if (!mediaStorageDir.mkdirs()) {
+                    Log.d(LOG_LABEL, "failed to create directory");
+                    return null;
+                }
             }
+
+            // Create a media file name
+            String timeStamp = IMAGE_DATE_FORMAT.format(new Date());
+            File imageFile = File.createTempFile("IMG_" + timeStamp + "_", ".jpg", mediaStorageDir);
+            currentPhotoPath = Uri.fromFile(imageFile);
+
+            return imageFile;
+        } else {
+            Log.d(LOG_LABEL, "No external media mounted or emulated");
+            currentPhotoPath = null;
+            return null;
         }
-
-        // Create a media file name
-        String timeStamp = IMAGE_DATE_FORMAT.format(new Date());
-        File imageFile = File.createTempFile("IMG_" + timeStamp + "_", ".jpg", mediaStorageDir);
-        currentPhotoPath = Uri.fromFile(imageFile);
-
-        return imageFile;
     }
 
     /**
@@ -204,10 +250,18 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
      * @param view ImageView to set (can also be an ImageButton, which is a subclass of ImageView)
      * @param imagePath Path to the image to set into the view
      */
-    public static void setDownscaledImageFromFilePath(ImageView view, String imagePath) {
+    public static void setDownscaledImageFromFilePath(ImageView view, String imagePath, int minWidth, int minHeight) {
         // Get the dimensions of the view
         int targetW = view.getWidth();
         int targetH = view.getHeight();
+
+        if (targetW == 0) {
+            targetW = minWidth;
+        }
+
+        if (targetH == 0) {
+            targetH = minHeight;
+        }
 
         // Get the dimensions of the bitmap
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
@@ -224,6 +278,58 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
         bmOptions.inSampleSize = scaleFactor;
 
         Bitmap bitmap = BitmapFactory.decodeFile(imagePath, bmOptions);
-        view.setImageBitmap(bitmap);
+
+        // camera may not necessarily store image right side up
+        // get orientation information set on bitmap, if any
+        try {
+            ExifInterface exif = new ExifInterface(imagePath);
+            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            Matrix matrix = new Matrix();
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
+                    matrix.setScale(-1, 1);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    matrix.setRotate(180);
+                    break;
+                case ExifInterface.ORIENTATION_FLIP_VERTICAL:
+                    matrix.setRotate(180);
+                    matrix.postScale(-1, 1);
+                    break;
+                case ExifInterface.ORIENTATION_TRANSPOSE:
+                    matrix.setRotate(90);
+                    matrix.postScale(-1, 1);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    matrix.setRotate(90);
+                    break;
+                case ExifInterface.ORIENTATION_TRANSVERSE:
+                    matrix.setRotate(-90);
+                    matrix.postScale(-1, 1);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    matrix.setRotate(-90);
+                    break;
+                default:
+                    // no rotation needed
+                    view.setImageBitmap(bitmap);
+                    return;
+            }
+
+            Log.d(LOG_LABEL, "Rotating image");
+            Bitmap oriented = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+            bitmap.recycle();
+            view.setImageBitmap(oriented);
+
+        } catch (IOException e) {
+            Log.e(LOG_LABEL, "Failed to get EXIF information to rotate image");
+            e.printStackTrace();
+            view.setImageBitmap(bitmap);
+        } catch (OutOfMemoryError e) {
+            Log.e(LOG_LABEL, "Ran out of memory rotating image! Need to downscale further?");
+            e.printStackTrace();
+            view.setImageBitmap(bitmap);
+        }
+
     }
 }
