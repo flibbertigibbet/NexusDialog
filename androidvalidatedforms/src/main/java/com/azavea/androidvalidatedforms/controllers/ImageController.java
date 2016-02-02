@@ -1,8 +1,8 @@
 package com.azavea.androidvalidatedforms.controllers;
 
 import android.app.Activity;
-import android.app.IntentService;
 import android.content.Context;
+import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -10,22 +10,26 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 
 import com.azavea.androidvalidatedforms.FormActivityBase;
 import com.azavea.androidvalidatedforms.FormController;
 import com.azavea.androidvalidatedforms.IntentResultListener;
-import com.azavea.androidvalidatedforms.R;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * Control for an image. Can either take a new picture with camera, or select existing image.
@@ -35,18 +39,19 @@ import java.lang.ref.WeakReference;
 public class ImageController<T extends Context & FormActivityBase> extends LabeledFieldController
     implements IntentResultListener {
 
-    private final int imageViewId = FormController.generateViewId();
-    private final int buttonId = FormController.generateViewId();
-    private final int imageHolderId = FormController.generateViewId();
+    private static final SimpleDateFormat IMAGE_DATE_FORMAT = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
 
-    private ImageView imageView;
-    private Button pickImageButton;
-    private LinearLayout imageHolder;
+    private static final String LOG_LABEL = "ImageControl";
+
+    private final int imageButtonId = FormController.generateViewId();
+
+    private ImageButton imageButton;
 
     private static final int CAMERA_REQUEST = 11;
     private static final int FILE_REQUEST = 22;
 
     private WeakReference<T> callingActivity;
+    private Uri currentPhotoPath;
 
     public ImageController(T ctx, String name, String labelText, boolean isRequired) {
         super(ctx, name, labelText, isRequired);
@@ -57,36 +62,27 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
     protected View createFieldView() {
         Context context = getContext();
 
-        imageHolder = new LinearLayout(context);
-        imageHolder.setLayoutParams(new ViewGroup.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT,
-                RelativeLayout.LayoutParams.WRAP_CONTENT));
-        imageHolder.setId(imageHolderId);
+        imageButton = new ImageButton(context);
+        imageButton.setId(imageButtonId);
+        imageButton.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        imageButton.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        imageButton.setMaxHeight(300);
+        imageButton.setImageDrawable(ContextCompat.getDrawable(context, android.R.drawable.ic_menu_camera));
 
-        imageView = new ImageView(context);
-        imageView.setId(imageViewId);
-        imageHolder.addView(imageView);
-
-        pickImageButton = new Button(context);
-        pickImageButton.setId(buttonId);
-        pickImageButton.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-        pickImageButton.setText(context.getString(R.string.image_picker_button_label));
-        imageHolder.addView(pickImageButton);
-
-        pickImageButton.setOnClickListener(new View.OnClickListener() {
+        imageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d("ImageControl", "Hey, that tickles!");
+                Log.d(LOG_LABEL, "image button clicked");
                 promptForImage();
             }
         });
 
-        return imageHolder;
+        return imageButton;
     }
 
     @Override
     public void refresh() {
-        Log.d("ImageControl", "Um, like, go refresh now?");
+        Log.d(LOG_LABEL, "TODO: go refresh now");
     }
 
     private void promptForImage() {
@@ -99,13 +95,27 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
             public void onClick(DialogInterface dialog, int item) {
                 T caller = callingActivity.get();
                 if (caller == null) {
-                    Log.e("ImageControl", "Calling activity has gone!");
+                    Log.e(LOG_LABEL, "Calling activity has gone!");
                     return;
                 }
 
                 if (items[item].equals("Take Photo")) {
                     Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    caller.launchIntent(intent, CAMERA_REQUEST, ImageController.this);
+
+                    if (intent.resolveActivity(getContext().getPackageManager()) != null) {
+                        try {
+                            // tell camera intent where to save the photo
+                            File photoFile = createImageFile();
+                            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+                            caller.launchIntent(intent, CAMERA_REQUEST, ImageController.this);
+                        } catch (IOException e) {
+                            Log.e(LOG_LABEL, "Could not create file to save image into");
+                            e.printStackTrace();
+                        }
+                    } else {
+                        // TODO: handle
+                        Log.e(LOG_LABEL, "Device has no camera!");
+                    }
                 } else if (items[item].equals("Choose from Library")) {
                     Intent intent = new Intent(
                             Intent.ACTION_PICK,
@@ -125,51 +135,79 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
         Log.d("ImageControl", "got intent result for request: " + requestCode);
 
         if (resultCode != Activity.RESULT_OK) {
-            Log.d("ImageControl", "intent result not ok; doing nothing");
+            Log.w(LOG_LABEL, "intent result not ok; doing nothing");
             return;
         }
 
         if (requestCode == CAMERA_REQUEST) {
-            Bitmap bitmap = getBitmapFromCameraData(resultData);
-            // TODO: use
+            // TODO: store image path to model
+            Log.d(LOG_LABEL, "full image saved to " + currentPhotoPath);
 
-            // get the thumbnail
-            Bundle extras = resultData.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            imageView.setImageBitmap(imageBitmap);
-            ///////////////////////////
+            // update image gallery to include the new pic
+            Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+            mediaScanIntent.setData(currentPhotoPath);
+            getContext().sendBroadcast(mediaScanIntent);
+
+            setDownscaledImageFromFilePath(imageButton, currentPhotoPath.getPath());
 
         } else if (requestCode == FILE_REQUEST) {
+            Uri imageUri = resultData.getData();
+            String[] projection = {MediaStore.MediaColumns.DATA};
+            CursorLoader loader = new CursorLoader(getContext(), imageUri, projection, null, null, null);
+            Cursor cursor = loader.loadInBackground();
+            int col_idx = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
+            cursor.moveToFirst();
+            String imagePath = cursor.getString(col_idx);
+            cursor.close();
+            Log.d(LOG_LABEL, "Have image path: " + imagePath);
 
+            setDownscaledImageFromFilePath(imageButton, imagePath);
         } else {
-            Log.w("ImageControl", "got unrecognized intent result");
+            Log.w(LOG_LABEL, "got unrecognized intent result");
         }
     }
 
-    // get the full-size photo
-    private Bitmap getBitmapFromCameraData(Intent data) {
-        Uri selectedImage = data.getData();
-        String[] filePathColumn = { MediaStore.Images.Media.DATA };
-        Cursor cursor = getContext().getContentResolver().query(selectedImage,filePathColumn, null, null, null);
-        if (cursor == null) {
-            Log.e("ImageControl", "Could not get cursor for camera data!");
-            return null;
+    private File createImageFile() throws IOException {
+        //File directory = getContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+
+        String appName = getContext().getApplicationInfo().loadLabel(getContext().getPackageManager()).toString();
+        Log.d(LOG_LABEL, "App name is: " + appName);
+
+        if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            // TODO: deal
+            Log.e(LOG_LABEL, "No external media");
         }
 
-        cursor.moveToFirst();
-        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-        String picturePath = cursor.getString(columnIndex);
-        cursor.close();
-        return BitmapFactory.decodeFile(picturePath);
+        File picturePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+
+        File mediaStorageDir = new File(picturePath, appName);
+
+        if (!mediaStorageDir.exists()) {
+            if (!mediaStorageDir.mkdirs()) {
+                Log.d(LOG_LABEL, "failed to create directory");
+                return null;
+            }
+        }
+
+        // Create a media file name
+        String timeStamp = IMAGE_DATE_FORMAT.format(new Date());
+        File imageFile = File.createTempFile("IMG_" + timeStamp + "_", ".jpg", mediaStorageDir);
+        currentPhotoPath = Uri.fromFile(imageFile);
+
+        return imageFile;
     }
 
     /**
-     * http://developer.android.com/training/camera/photobasics.html
+     * Helper to downscale an image and put it into a view.
+     * See: http://developer.android.com/training/camera/photobasics.html
+     *
+     * @param view ImageView to set (can also be an ImageButton, which is a subclass of ImageView)
+     * @param imagePath Path to the image to set into the view
      */
-    private void setFullImageFromFilePath(String imagePath) {
-        // Get the dimensions of the View
-        int targetW = imageView.getWidth();
-        int targetH = imageView.getHeight();
+    public static void setDownscaledImageFromFilePath(ImageView view, String imagePath) {
+        // Get the dimensions of the view
+        int targetW = view.getWidth();
+        int targetH = view.getHeight();
 
         // Get the dimensions of the bitmap
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
@@ -186,6 +224,6 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
         bmOptions.inSampleSize = scaleFactor;
 
         Bitmap bitmap = BitmapFactory.decodeFile(imagePath, bmOptions);
-        imageView.setImageBitmap(bitmap);
+        view.setImageBitmap(bitmap);
     }
 }

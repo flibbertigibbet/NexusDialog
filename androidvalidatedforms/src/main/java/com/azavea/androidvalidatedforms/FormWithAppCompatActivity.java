@@ -15,6 +15,7 @@ import android.view.WindowManager.LayoutParams;
 
 import com.azavea.androidvalidatedforms.tasks.DisplayFormTask;
 
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 
