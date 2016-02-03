@@ -31,11 +31,11 @@
         android:id="@+id/image_view"
         android:layout_below="@+id/image_button"
         android:layout_width="match_parent"
-        android:scaleType="centerInside"
-        android:layout_height="wrap_content"
-        android:minHeight="200dp"
         android:maxHeight="500dp"
-        android:visibility="gone"
+        android:scaleType="fitCenter"
+        android:src="@android:drawable/ic_menu_gallery"
+        android:layout_height="wrap_content"
+        android:visibility="visible"
         android:adjustViewBounds="true"
         android:contentDescription="@string/image_description" />
 

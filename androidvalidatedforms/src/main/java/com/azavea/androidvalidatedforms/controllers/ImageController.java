@@ -195,8 +195,6 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
      */
     @Override
     public void gotIntentResult(int requestCode, int resultCode, Intent resultData) {
-        Log.d("ImageControl", "got intent result for request: " + requestCode);
-
         if (resultCode != Activity.RESULT_OK) {
             Log.w(LOG_LABEL, "intent result not ok; doing nothing");
             return;
@@ -216,8 +214,6 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
                 Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                 mediaScanIntent.setData(currentPhotoPath);
                 getContext().sendBroadcast(mediaScanIntent);
-
-                setImageToPath(currentPhotoPath.getPath());
             }
         } else if (requestCode == FILE_REQUEST) {
             Uri imageUri = resultData.getData();
@@ -233,9 +229,6 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
             // store image path to model
             getModel().setValue(getName(), imagePath);
             setNeedsValidation();
-
-            setImageToPath(imagePath);
-
         } else {
             Log.w(LOG_LABEL, "got unrecognized intent result");
         }
@@ -283,7 +276,7 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
      * @param imagePath Path to the image to set into the view
      * @return true on success
      */
-    public static boolean setDownscaledImageFromFilePath(ImageView view, String imagePath, int minWidth, int minHeight) {
+    public static boolean setDownscaledImageFromFilePath(ImageView view, String imagePath, int defaultWidth, int defaultHeight) {
         // first check if image file actually exists
         File file = new File(imagePath);
         if (!file.exists()) {
@@ -296,12 +289,12 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
         int targetW = view.getWidth();
         int targetH = view.getHeight();
 
-        if (targetW == 0) {
-            targetW = minWidth;
+        if (targetW < defaultWidth) {
+            targetW = defaultWidth;
         }
 
-        if (targetH == 0) {
-            targetH = minHeight;
+        if (targetH < defaultHeight) {
+            targetH = defaultHeight;
         }
 
         // Get the dimensions of the bitmap
@@ -312,7 +305,7 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
         int photoW = bmOptions.outWidth;
         int photoH = bmOptions.outHeight;
 
-        // Determine how much to scale down the image
+        // Determine how much to scale the image
         int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
 
         // Decode the image file into a Bitmap sized to fill the View
