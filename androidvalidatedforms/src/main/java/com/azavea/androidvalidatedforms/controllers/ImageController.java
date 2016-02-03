@@ -51,12 +51,20 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
     private static final int CAMERA_REQUEST = 11;
     private static final int FILE_REQUEST = 22;
 
+    private final String TAKE_PHOTO_PROMPT;
+    private final String SELECT_PHOTO_FILE_PROMPT;
+    private final String CANCEL_ACTION;
+
     private WeakReference<T> callingActivity;
     private Uri currentPhotoPath;
 
     public ImageController(T ctx, String name, String labelText, boolean isRequired) {
         super(ctx, name, labelText, isRequired);
         callingActivity = new WeakReference<>(ctx);
+
+        TAKE_PHOTO_PROMPT = ctx.getString(R.string.image_take_with_camera);
+        SELECT_PHOTO_FILE_PROMPT = ctx.getString(R.string.image_pick_file);
+        CANCEL_ACTION = ctx.getString(R.string.cancel);
     }
 
     @Override
@@ -125,10 +133,10 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
      * an existing image from the gallery.
      */
     private void promptForImage() {
-        // TODO: strings, strings everywhere! Put them in strings.xml
-        final CharSequence[] items = {"Take Photo", "Choose from Library", "Cancel" };
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle("Add Photo!");
+        Context context = getContext();
+        final CharSequence[] items = {TAKE_PHOTO_PROMPT, SELECT_PHOTO_FILE_PROMPT, CANCEL_ACTION };
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(context.getString(R.string.image_picker_button_label));
         builder.setItems(items, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int item) {
@@ -140,7 +148,7 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
 
                 currentPhotoPath = null;
 
-                if (items[item].equals("Take Photo")) {
+                if (items[item].equals(TAKE_PHOTO_PROMPT)) {
                     Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
                     if (intent.resolveActivity(getContext().getPackageManager()) != null) {
@@ -164,13 +172,13 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
                         // should be handled with app requirements
                         Log.e(LOG_LABEL, "Device has no camera! Require camera in your AndroidManifest.xml");
                     }
-                } else if (items[item].equals("Choose from Library")) {
+                } else if (items[item].equals(SELECT_PHOTO_FILE_PROMPT)) {
                     Intent intent = new Intent(
                             Intent.ACTION_PICK,
                             android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                     intent.setType("image/*");
                     caller.launchIntent(Intent.createChooser(intent, "Select File"), FILE_REQUEST, ImageController.this);
-                } else if (items[item].equals("Cancel")) {
+                } else if (items[item].equals(CANCEL_ACTION)) {
                     dialog.dismiss();
                 }
             }
@@ -198,10 +206,10 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
 
             if (currentPhotoPath != null) {
                 // camera saved image to external media
-                Log.d(LOG_LABEL, "full image saved to " + currentPhotoPath);
+                Log.d(LOG_LABEL, "full image saved to " + currentPhotoPath.getPath());
 
                 // store image path to model
-                getModel().setValue(getName(), currentPhotoPath);
+                getModel().setValue(getName(), currentPhotoPath.getPath());
                 setNeedsValidation();
 
                 // update image gallery to include the new pic
@@ -249,7 +257,7 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
 
             if (!mediaStorageDir.exists()) {
                 if (!mediaStorageDir.mkdirs()) {
-                    Log.d(LOG_LABEL, "failed to create directory");
+                    Log.e(LOG_LABEL, "failed to create directory");
                     return null;
                 }
             }
@@ -261,7 +269,7 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
 
             return imageFile;
         } else {
-            Log.d(LOG_LABEL, "No external media mounted or emulated");
+            Log.e(LOG_LABEL, "No external media mounted or emulated");
             currentPhotoPath = null;
             return null;
         }
@@ -273,6 +281,7 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
      *
      * @param view ImageView to set (can also be an ImageButton, which is a subclass of ImageView)
      * @param imagePath Path to the image to set into the view
+     * @return true on success
      */
     public static boolean setDownscaledImageFromFilePath(ImageView view, String imagePath, int minWidth, int minHeight) {
         // first check if image file actually exists
@@ -355,7 +364,7 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
                     return true;
             }
 
-            Log.d(LOG_LABEL, "Rotating image");
+            // rotate image
             Bitmap oriented = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
             bitmap.recycle();
             view.setImageBitmap(oriented);
