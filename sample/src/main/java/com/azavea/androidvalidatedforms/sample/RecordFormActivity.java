@@ -76,7 +76,7 @@ public class RecordFormActivity extends FormWithAppCompatActivity implements For
 
         section.addElement(new DatePickerController(this, "When", "Some date", true, true));
 
-        section.addElement(new ImageController(this, "Pics", "Some Pic", true));
+        section.addElement(new ImageController(this, "Pic", "Some Pic", true));
 
         return section;
     }

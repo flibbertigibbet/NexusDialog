@@ -35,6 +35,7 @@ import java.util.Locale;
 
 /**
  * Control for an image. Can either take a new picture with camera, or select existing image.
+ * Model for image control is expected to be a string to hold the path to the image on the device.
  *
  * Created by kathrynkillebrew on 2/1/16.
  */
@@ -93,9 +94,36 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
 
     @Override
     public void refresh() {
-        Log.d(LOG_LABEL, "TODO: go refresh now");
+        Object value = getModel().getValue(getName());
+        String valueStr = value != null ? value.toString() : "";
+        getModel().setValue(getName(), valueStr);
+        setNeedsValidation();
+
+        if (!valueStr.isEmpty()) {
+            setImageToPath(valueStr);
+        } else {
+            // have no image set yet
+            imageView.setVisibility(View.GONE);
+        }
     }
 
+    /**
+     * Helper to set image, check if it succeeded, and clear path on model if it failed
+     *
+     * @param path Path to the image file to use
+     */
+    private void setImageToPath(String path) {
+        if (!setDownscaledImageFromFilePath(imageView, path, 200, 200)) {
+            // failed to set image; clear path string that was set
+            getModel().setValue(getName(), null);
+            setNeedsValidation();
+        }
+    }
+
+    /**
+     * Display dialog to set image either by taking a new picture with the camera, or picking
+     * an existing image from the gallery.
+     */
     private void promptForImage() {
         // TODO: strings, strings everywhere! Put them in strings.xml
         final CharSequence[] items = {"Take Photo", "Choose from Library", "Cancel" };
@@ -109,6 +137,8 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
                     Log.e(LOG_LABEL, "Calling activity has gone!");
                     return;
                 }
+
+                currentPhotoPath = null;
 
                 if (items[item].equals("Take Photo")) {
                     Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -148,6 +178,13 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
         builder.show();
     }
 
+    /**
+     * Called by activity when camera or file picker intent result returns.
+     *
+     * @param requestCode The request code sent
+     * @param resultCode Should be "OK"
+     * @param resultData The intent results; content depends on the intent launched
+     */
     @Override
     public void gotIntentResult(int requestCode, int resultCode, Intent resultData) {
         Log.d("ImageControl", "got intent result for request: " + requestCode);
@@ -158,18 +195,21 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
         }
 
         if (requestCode == CAMERA_REQUEST) {
-            // TODO: store image path to model
 
             if (currentPhotoPath != null) {
                 // camera saved image to external media
                 Log.d(LOG_LABEL, "full image saved to " + currentPhotoPath);
+
+                // store image path to model
+                getModel().setValue(getName(), currentPhotoPath);
+                setNeedsValidation();
 
                 // update image gallery to include the new pic
                 Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                 mediaScanIntent.setData(currentPhotoPath);
                 getContext().sendBroadcast(mediaScanIntent);
 
-                setDownscaledImageFromFilePath(imageView, currentPhotoPath.getPath(), 200, 200);
+                setImageToPath(currentPhotoPath.getPath());
             }
         } else if (requestCode == FILE_REQUEST) {
             Uri imageUri = resultData.getData();
@@ -182,7 +222,12 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
             cursor.close();
             Log.d(LOG_LABEL, "Have image path: " + imagePath);
 
-            setDownscaledImageFromFilePath(imageView, imagePath, 200, 200);
+            // store image path to model
+            getModel().setValue(getName(), imagePath);
+            setNeedsValidation();
+
+            setImageToPath(imagePath);
+
         } else {
             Log.w(LOG_LABEL, "got unrecognized intent result");
         }
@@ -229,7 +274,15 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
      * @param view ImageView to set (can also be an ImageButton, which is a subclass of ImageView)
      * @param imagePath Path to the image to set into the view
      */
-    public static void setDownscaledImageFromFilePath(ImageView view, String imagePath, int minWidth, int minHeight) {
+    public static boolean setDownscaledImageFromFilePath(ImageView view, String imagePath, int minWidth, int minHeight) {
+        // first check if image file actually exists
+        File file = new File(imagePath);
+        if (!file.exists()) {
+            Log.e(LOG_LABEL, "Image file does not exist at " + imagePath);
+            view.setVisibility(View.GONE);
+            return false;
+        }
+
         // Get the dimensions of the view
         int targetW = view.getWidth();
         int targetH = view.getHeight();
@@ -245,6 +298,7 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
         // Get the dimensions of the bitmap
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inJustDecodeBounds = true;
+
         BitmapFactory.decodeFile(imagePath, bmOptions);
         int photoW = bmOptions.outWidth;
         int photoH = bmOptions.outHeight;
@@ -257,6 +311,12 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
         bmOptions.inSampleSize = scaleFactor;
 
         Bitmap bitmap = BitmapFactory.decodeFile(imagePath, bmOptions);
+
+        if (bitmap == null) {
+            Log.e(LOG_LABEL, "Failed to decode bitmap at " + imagePath);
+            view.setVisibility(View.GONE);
+            return false;
+        }
 
         // camera may not necessarily store image right side up
         // get orientation information set on bitmap, if any
@@ -292,7 +352,7 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
                 default:
                     // no rotation needed
                     view.setImageBitmap(bitmap);
-                    return;
+                    return true;
             }
 
             Log.d(LOG_LABEL, "Rotating image");
@@ -311,5 +371,6 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
         }
 
         view.setVisibility(View.VISIBLE);
+        return true;
     }
 }
