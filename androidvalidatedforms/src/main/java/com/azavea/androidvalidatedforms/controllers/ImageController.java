@@ -13,20 +13,16 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.azavea.androidvalidatedforms.FormActivityBase;
-import com.azavea.androidvalidatedforms.FormController;
 import com.azavea.androidvalidatedforms.IntentResultListener;
 import com.azavea.androidvalidatedforms.R;
 
@@ -49,10 +45,6 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
 
     private static final String LOG_LABEL = "ImageControl";
 
-    private final int imageButtonId = FormController.generateViewId();
-    private final int imageViewId = FormController.generateViewId();
-    private final int containerId = FormController.generateViewId();
-
     private ImageView imageView;
 
     private static final int CAMERA_REQUEST = 11;
@@ -67,23 +59,19 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
     }
 
     @Override
-    protected View createFieldView() {
-        Context context = getContext();
+    protected View createView() {
+        LayoutInflater inflater = (LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        RelativeLayout view = (RelativeLayout) inflater.inflate(R.layout.form_labeled_image_element, null);
+        errorView = (TextView) view.findViewById(R.id.field_error);
 
-        LinearLayout container = new LinearLayout(context);
-        container.setId(containerId);
-        LinearLayout.LayoutParams containerParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        container.setLayoutParams(containerParams);
+        TextView label = (TextView)view.findViewById(R.id.field_label);
+        if (labelText == null) {
+            label.setVisibility(View.GONE);
+        } else {
+            label.setText(labelText);
+        }
 
-        ImageButton imageButton = new ImageButton(context);
-        imageButton.setId(imageButtonId);
-        imageButton.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        LinearLayout.LayoutParams imageButtonLayoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        imageButtonLayoutParams.gravity = Gravity.CENTER | Gravity.BOTTOM;
-        imageButton.setLayoutParams(imageButtonLayoutParams);
-        imageButton.setImageDrawable(ContextCompat.getDrawable(context, android.R.drawable.ic_menu_camera));
-        container.addView(imageButton);
-
+        ImageButton imageButton = (ImageButton) view.findViewById(R.id.image_button);
         imageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -92,24 +80,15 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
             }
         });
 
-        imageView = new ImageView(context);
-        imageView.setId(imageViewId);
-        imageView.setMaxHeight(600);
-        imageView.setMinimumHeight(300);
-        imageView.setMinimumWidth(200);
-        imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        imageView = (ImageView) view.findViewById(R.id.image_view);
 
-        imageView.setImageDrawable(ContextCompat.getDrawable(context, android.R.drawable.ic_menu_camera));
+        return view;
+    }
 
-        LinearLayout.LayoutParams imageViewLayoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-
-        imageViewLayoutParams.gravity = Gravity.CENTER | Gravity.TOP;
-        imageView.setLayoutParams(imageViewLayoutParams);
-
-        container.addView(imageView);
-
-        return container;
+    @Override
+    protected View createFieldView() {
+        // using a custom layout, so nothing to do here
+        return null;
     }
 
     @Override
@@ -331,5 +310,6 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
             view.setImageBitmap(bitmap);
         }
 
+        view.setVisibility(View.VISIBLE);
     }
 }

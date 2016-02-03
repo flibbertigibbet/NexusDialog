@@ -3,4 +3,5 @@
     <string name="validation_error_title">Invalid Input</string>
     <string name="required_field_error_msg">%s is a required field</string>
     <string name="image_picker_button_label">Pick image</string>
+    <string name="image_description">Selected image</string>
 </resources>

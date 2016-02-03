@@ -25,10 +25,10 @@ import javax.validation.Validator;
  * An abstract class that represents a generic form field with an associated label.
  */
 public abstract class LabeledFieldController extends FormElementController {
-    private final String labelText;
+    protected final String labelText;
     private boolean required;
     private View fieldView;
-    private TextView errorView;
+    protected TextView errorView;
     private boolean needsValidation;
     private List<ValidationError> errors;
 
