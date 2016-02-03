@@ -20,4 +20,6 @@ public class TestModel {
     public String FavoriteColor;
 
     public Date When;
+
+    public String Pic;
 }

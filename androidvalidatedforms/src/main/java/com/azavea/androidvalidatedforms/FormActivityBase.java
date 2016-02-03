@@ -1,5 +1,8 @@
 package com.azavea.androidvalidatedforms;
 
+import android.content.Intent;
+import android.os.Bundle;
+
 import com.azavea.androidvalidatedforms.tasks.ValidationTask;
 
 /**
@@ -30,4 +33,6 @@ public interface FormActivityBase extends ValidationTask.ValidationCallback {
     FormController createFormController();
 
     void showProgress(final boolean show);
+
+    void launchIntent(Intent intent, int requestCode, IntentResultListener listener);
 }
