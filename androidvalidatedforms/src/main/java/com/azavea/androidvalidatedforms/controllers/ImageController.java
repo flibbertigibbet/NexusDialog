@@ -156,7 +156,7 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
      */
     private void promptForImage() {
         Context context = getContext();
-        final CharSequence[] items = {TAKE_PHOTO_PROMPT, SELECT_PHOTO_FILE_PROMPT, CANCEL_ACTION };
+        final CharSequence[] items = {TAKE_PHOTO_PROMPT, SELECT_PHOTO_FILE_PROMPT, CANCEL_ACTION};
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(context.getString(R.string.image_picker_button_label));
         builder.setItems(items, new DialogInterface.OnClickListener() {
