@@ -21,5 +21,5 @@ public class TestModel {
 
     public Date When;
 
-    public String Pic;
+    public ImageHolder Pic;
 }
