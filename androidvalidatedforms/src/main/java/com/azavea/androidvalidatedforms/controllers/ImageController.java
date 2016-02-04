@@ -100,12 +100,34 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
         return null;
     }
 
+    /**
+     * Use this method to set image path on model instead of calling
+     * {@link com.azavea.androidvalidatedforms.FormModel#setValue(String, Object)} directly.
+     *
+     * Override to use backing model that is not itself a String.
+     *
+     * @param newImagePath Path to set on model
+     */
+    protected void setModelValue(String newImagePath) {
+        getModel().setValue(getName(), newImagePath);
+    }
+
+    /**
+     * Use this method to retrieve image path on model instead of calling
+     * {@link com.azavea.androidvalidatedforms.FormModel#getValue(String)} directly.
+     *
+     * Override to use backing model that is not itself a String.
+     *
+     * @return String value of path to image
+     */
+    protected Object getModelValue() {
+        return getModel().getValue(getName());
+    }
+
     @Override
     public void refresh() {
-        Object value = getModel().getValue(getName());
+        Object value = getModelValue();
         String valueStr = value != null ? value.toString() : "";
-        getModel().setValue(getName(), valueStr);
-        setNeedsValidation();
 
         if (!valueStr.isEmpty()) {
             setImageToPath(valueStr);
@@ -123,7 +145,7 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
     private void setImageToPath(String path) {
         if (!setDownscaledImageFromFilePath(imageView, path, 200, 200)) {
             // failed to set image; clear path string that was set
-            getModel().setValue(getName(), null);
+            setModelValue(null);
             setNeedsValidation();
         }
     }
@@ -207,7 +229,7 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
                 Log.d(LOG_LABEL, "full image saved to " + currentPhotoPath.getPath());
 
                 // store image path to model
-                getModel().setValue(getName(), currentPhotoPath.getPath());
+                setModelValue(currentPhotoPath.getPath());
                 setNeedsValidation();
 
                 // update image gallery to include the new pic
@@ -227,7 +249,7 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
             Log.d(LOG_LABEL, "Have image path: " + imagePath);
 
             // store image path to model
-            getModel().setValue(getName(), imagePath);
+            setModelValue(imagePath);
             setNeedsValidation();
         } else {
             Log.w(LOG_LABEL, "got unrecognized intent result");

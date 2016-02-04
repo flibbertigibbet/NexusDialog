@@ -13,7 +13,6 @@ import com.azavea.androidvalidatedforms.FormWithAppCompatActivity;
 import com.azavea.androidvalidatedforms.controllers.DatePickerController;
 import com.azavea.androidvalidatedforms.controllers.EditTextController;
 import com.azavea.androidvalidatedforms.controllers.FormSectionController;
-import com.azavea.androidvalidatedforms.controllers.ImageController;
 import com.azavea.androidvalidatedforms.controllers.SelectionController;
 import com.azavea.androidvalidatedforms.tasks.ValidationTask;
 
@@ -76,7 +75,7 @@ public class RecordFormActivity extends FormWithAppCompatActivity implements For
 
         section.addElement(new DatePickerController(this, "When", "Some date", true, true));
 
-        section.addElement(new ImageController(this, "Pic", "Some Pic", true));
+        section.addElement(new SampleImageController(this, "Pic", "Some Pic", true));
 
         return section;
     }
