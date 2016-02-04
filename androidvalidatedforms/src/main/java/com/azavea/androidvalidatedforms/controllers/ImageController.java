@@ -90,6 +90,7 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
         });
 
         imageView = (ImageView) view.findViewById(R.id.image_view);
+        refresh();
 
         return view;
     }
