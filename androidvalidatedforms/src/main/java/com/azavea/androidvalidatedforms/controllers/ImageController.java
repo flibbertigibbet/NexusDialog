@@ -6,10 +6,6 @@ import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -25,6 +21,7 @@ import android.widget.TextView;
 import com.azavea.androidvalidatedforms.FormActivityBase;
 import com.azavea.androidvalidatedforms.IntentResultListener;
 import com.azavea.androidvalidatedforms.R;
+import com.azavea.androidvalidatedforms.tasks.ResizeImageTask;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +37,7 @@ import java.util.Locale;
  * Created by kathrynkillebrew on 2/1/16.
  */
 public class ImageController<T extends Context & FormActivityBase> extends LabeledFieldController
-    implements IntentResultListener {
+    implements IntentResultListener, ResizeImageTask.ResizeImageCallback {
 
     private static final SimpleDateFormat IMAGE_DATE_FORMAT = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
 
@@ -50,6 +47,7 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
 
     private static final int CAMERA_REQUEST = 11;
     private static final int FILE_REQUEST = 22;
+    private static final int DEFAULT_IMAGE_SIZE = 200;
 
     private final String TAKE_PHOTO_PROMPT;
     private final String SELECT_PHOTO_FILE_PROMPT;
@@ -141,16 +139,23 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
     }
 
     /**
-     * Helper to set image, check if it succeeded, and clear path on model if it failed
+     * Helper to start task to set image
      *
      * @param path Path to the image file to use
      */
     private void setImageToPath(String path) {
-        if (!setDownscaledImageFromFilePath(imageView, path, 200, 200)) {
-            // failed to set image; clear path string that was set
-            setModelValue(null);
-            setNeedsValidation();
-        }
+        ResizeImageTask resizeImageTask = new ResizeImageTask(imageView,
+                DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE, this);
+        resizeImageTask.execute(path);
+    }
+
+    /**
+     * Callback to clear path on model if failed to set image from path
+     */
+    @Override
+    public void imageNotSet() {
+        setModelValue(null);
+        setNeedsValidation();
     }
 
     /**
@@ -291,113 +296,5 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
             currentPhotoPath = null;
             return null;
         }
-    }
-
-    /**
-     * Helper to downscale an image and put it into a view.
-     * See: http://developer.android.com/training/camera/photobasics.html
-     *
-     * @param view ImageView to set (can also be an ImageButton, which is a subclass of ImageView)
-     * @param imagePath Path to the image to set into the view
-     * @return true on success
-     */
-    public static boolean setDownscaledImageFromFilePath(ImageView view, String imagePath, int defaultWidth, int defaultHeight) {
-        // first check if image file actually exists
-        File file = new File(imagePath);
-        if (!file.exists()) {
-            Log.e(LOG_LABEL, "Image file does not exist at " + imagePath);
-            view.setVisibility(View.GONE);
-            return false;
-        }
-
-        // Get the dimensions of the view
-        int targetW = view.getWidth();
-        int targetH = view.getHeight();
-
-        if (targetW < defaultWidth) {
-            targetW = defaultWidth;
-        }
-
-        if (targetH < defaultHeight) {
-            targetH = defaultHeight;
-        }
-
-        // Get the dimensions of the bitmap
-        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-        bmOptions.inJustDecodeBounds = true;
-
-        BitmapFactory.decodeFile(imagePath, bmOptions);
-        int photoW = bmOptions.outWidth;
-        int photoH = bmOptions.outHeight;
-
-        // Determine how much to scale the image
-        int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
-
-        // Decode the image file into a Bitmap sized to fill the View
-        bmOptions.inJustDecodeBounds = false;
-        bmOptions.inSampleSize = scaleFactor;
-
-        Bitmap bitmap = BitmapFactory.decodeFile(imagePath, bmOptions);
-
-        if (bitmap == null) {
-            Log.e(LOG_LABEL, "Failed to decode bitmap at " + imagePath);
-            view.setVisibility(View.GONE);
-            return false;
-        }
-
-        // camera may not necessarily store image right side up
-        // get orientation information set on bitmap, if any
-        try {
-            ExifInterface exif = new ExifInterface(imagePath);
-            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-            Matrix matrix = new Matrix();
-            switch (orientation) {
-                case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
-                    matrix.setScale(-1, 1);
-                    break;
-                case ExifInterface.ORIENTATION_ROTATE_180:
-                    matrix.setRotate(180);
-                    break;
-                case ExifInterface.ORIENTATION_FLIP_VERTICAL:
-                    matrix.setRotate(180);
-                    matrix.postScale(-1, 1);
-                    break;
-                case ExifInterface.ORIENTATION_TRANSPOSE:
-                    matrix.setRotate(90);
-                    matrix.postScale(-1, 1);
-                    break;
-                case ExifInterface.ORIENTATION_ROTATE_90:
-                    matrix.setRotate(90);
-                    break;
-                case ExifInterface.ORIENTATION_TRANSVERSE:
-                    matrix.setRotate(-90);
-                    matrix.postScale(-1, 1);
-                    break;
-                case ExifInterface.ORIENTATION_ROTATE_270:
-                    matrix.setRotate(-90);
-                    break;
-                default:
-                    // no rotation needed
-                    view.setImageBitmap(bitmap);
-                    return true;
-            }
-
-            // rotate image
-            Bitmap oriented = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-            bitmap.recycle();
-            view.setImageBitmap(oriented);
-
-        } catch (IOException e) {
-            Log.e(LOG_LABEL, "Failed to get EXIF information to rotate image");
-            e.printStackTrace();
-            view.setImageBitmap(bitmap);
-        } catch (OutOfMemoryError e) {
-            Log.e(LOG_LABEL, "Ran out of memory rotating image! Need to downscale further?");
-            e.printStackTrace();
-            view.setImageBitmap(bitmap);
-        }
-
-        view.setVisibility(View.VISIBLE);
-        return true;
     }
 }
