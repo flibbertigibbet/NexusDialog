@@ -123,6 +123,7 @@ public class CheckBoxController extends LabeledFieldController {
      *
      * @return The values from the model.
      */
+    @SuppressWarnings("unchecked")
     private Set<Object> retrieveModelValues() {
         Set<Object> modelValues = (Set<Object>) getModel().getValue(getName());
         if (modelValues == null) {
