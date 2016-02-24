@@ -31,6 +31,13 @@ public class ValidationTask extends AsyncTask<Void, Void, Boolean> {
 
         FormActivityBase activityBase = activity.get();
         if (activityBase != null) {
+
+            // do not attempt validating form that has not finished loading yet
+            if (!activityBase.isFormReady()) {
+                cancel(true);
+                return;
+            }
+
             activityBase.showProgress(true);
             activityBase.getFormController().resetValidationErrors();
         }
