@@ -10,6 +10,7 @@ import android.widget.Button;
 import com.azavea.androidvalidatedforms.FormActivityBase;
 import com.azavea.androidvalidatedforms.FormController;
 import com.azavea.androidvalidatedforms.FormWithAppCompatActivity;
+import com.azavea.androidvalidatedforms.controllers.CheckBoxController;
 import com.azavea.androidvalidatedforms.controllers.DatePickerController;
 import com.azavea.androidvalidatedforms.controllers.EditTextController;
 import com.azavea.androidvalidatedforms.controllers.FormSectionController;
@@ -69,6 +70,8 @@ public class RecordFormActivity extends FormWithAppCompatActivity implements For
         colors.add("red");
         colors.add("blue");
         colors.add("green");
+        colors.add("yellow");
+        colors.add("fuscia");
 
         section.addElement(new SelectionController(this, "FavoriteColor", "favorite color",
                 true, "Select", colors, colors));
@@ -76,6 +79,8 @@ public class RecordFormActivity extends FormWithAppCompatActivity implements For
         section.addElement(new DatePickerController(this, "When", "Some date", true, true));
 
         section.addElement(new SampleImageController(this, "Pic", "Some Pic", true));
+
+        section.addElement(new CheckBoxController(this, "Options", "Some options", false, colors, true));
 
         return section;
     }
