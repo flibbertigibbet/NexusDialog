@@ -1,6 +1,7 @@
 package com.azavea.androidvalidatedforms.sample;
 
 import java.util.Date;
+import java.util.Set;
 
 import javax.validation.constraints.Size;
 
@@ -22,4 +23,6 @@ public class TestModel {
     public Date When;
 
     public ImageHolder Pic;
+
+    public Set<String> Options;
 }
