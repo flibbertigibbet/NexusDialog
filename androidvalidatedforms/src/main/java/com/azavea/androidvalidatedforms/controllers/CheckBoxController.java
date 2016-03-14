@@ -64,12 +64,17 @@ public class CheckBoxController extends LabeledFieldController {
         LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         ViewGroup checkboxContainer = (ViewGroup) inflater.inflate(R.layout.form_checkbox_container, null);
 
+        Set<Object> modelValues = retrieveModelValues();
         CheckBox checkBox;
         int nbItem = items.size();
         for (int index = 0; index < nbItem; index++) {
             checkBox = new CheckBox(getContext());
             checkBox.setText(items.get(index));
             checkBox.setId(CHECKBOX_ID + index);
+            if (modelValues.contains(values.get(index))) {
+                checkBox.setChecked(true);
+            }
+
             checkBox.setOnCheckedChangeListener(new CheckBox.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
