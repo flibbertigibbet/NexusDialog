@@ -73,7 +73,8 @@ public class RecordFormActivity extends FormWithAppCompatActivity implements For
         colors.add("yellow");
         colors.add("fuscia");
 
-        ArrayList<String> truthiness = new ArrayList<>(2);
+        ArrayList<String> truthiness = new ArrayList<>(3);
+        truthiness.add("");
         truthiness.add("yes");
         truthiness.add("no");
 
@@ -81,7 +82,7 @@ public class RecordFormActivity extends FormWithAppCompatActivity implements For
                 false, "Select", colors, colors));
 
         section.addElement(new SelectionController(this, "Truthiness", "yes or no?",
-                true, "Select", truthiness, truthiness));
+                false, "Select", truthiness, truthiness));
 
         section.addElement(new DatePickerController(this, "When", "Some date", true, true));
 
