@@ -20,6 +20,8 @@ public class TestModel {
 
     public String FavoriteColor;
 
+    public String Truthiness;
+
     public Date When;
 
     public ImageHolder Pic;

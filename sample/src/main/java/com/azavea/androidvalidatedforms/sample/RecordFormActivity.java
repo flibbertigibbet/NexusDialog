@@ -66,15 +66,23 @@ public class RecordFormActivity extends FormWithAppCompatActivity implements For
         section.addElement(new EditTextController(this, "FirstName", "first name", "first name", true));
         section.addElement(new EditTextController(this, "LastName", "last name", "last name", true));
 
-        ArrayList<String> colors = new ArrayList<>(3);
+        ArrayList<String> colors = new ArrayList<>(5);
         colors.add("red");
         colors.add("blue");
         colors.add("green");
         colors.add("yellow");
         colors.add("fuscia");
 
+        ArrayList<String> truthiness = new ArrayList<>(3);
+        truthiness.add("");
+        truthiness.add("yes");
+        truthiness.add("no");
+
         section.addElement(new SelectionController(this, "FavoriteColor", "favorite color",
-                true, "Select", colors, colors));
+                false, "Select", colors, colors));
+
+        section.addElement(new SelectionController(this, "Truthiness", "yes or no?",
+                false, "Select", truthiness, truthiness));
 
         section.addElement(new DatePickerController(this, "When", "Some date", true, true));
 

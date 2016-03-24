@@ -98,6 +98,11 @@ public class SelectionController extends LabeledFieldController {
                     }
                 }
 
+                // allow empty string values to be used to represent empty selection on non-required fields
+                if (!isRequired() && value != null && value.equals("")) {
+                    value = null;
+                }
+
                 getModel().setValue(getName(), value);
             }
 
