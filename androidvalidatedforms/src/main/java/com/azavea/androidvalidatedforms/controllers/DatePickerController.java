@@ -35,6 +35,7 @@ public class DatePickerController extends LabeledFieldController {
     private final SimpleDateFormat displayFormat;
     private final Calendar calendar;
     private boolean showTimePicker = false;
+    private long maxDateTime = 0;
 
     /**
      * Constructs a new instance of a date picker field.
@@ -91,6 +92,23 @@ public class DatePickerController extends LabeledFieldController {
 
         this(ctx, name, labelText, isRequired, displayFormat);
         this.showTimePicker = showTimePicker;
+    }
+
+    /**
+     * Set the maximum allowed date in the date picker. Note that the time picker may still allow
+     * setting to a future time, so it will be necessary to validate as well.
+     *
+     * @param time maximum allowed time (POSIX milliseconds) in the picker
+     */
+    public void setMaxDate(long time) {
+        maxDateTime = time;
+    }
+
+    /**
+     * Use the current date as the maximum allowed date in the picker.
+     */
+    public void setMaxDateToNow() {
+        maxDateTime = System.currentTimeMillis();
     }
 
     @Override
@@ -151,6 +169,9 @@ public class DatePickerController extends LabeledFieldController {
                 }
             });
 
+            if (maxDateTime > 0) {
+                datePickerDialog.getDatePicker().setMaxDate(maxDateTime);
+            }
             datePickerDialog.show();
         }
     }
