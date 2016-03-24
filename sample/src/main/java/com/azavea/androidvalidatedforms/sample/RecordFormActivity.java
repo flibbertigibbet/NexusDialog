@@ -84,7 +84,10 @@ public class RecordFormActivity extends FormWithAppCompatActivity implements For
         section.addElement(new SelectionController(this, "Truthiness", "yes or no?",
                 false, "Select", truthiness, truthiness));
 
-        section.addElement(new DatePickerController(this, "When", "Some date", true, true));
+        DatePickerController datePickerCtl = new DatePickerController(this, "When", "Some date", true, true);
+        datePickerCtl.setMaxDateToNow();
+
+        section.addElement(datePickerCtl);
 
         section.addElement(new SampleImageController(this, "Pic", "Some Pic", true));
 
