@@ -7,4 +7,5 @@
     <string name="image_picker_button_label">اختيار صورة</string>
     <string name="image_pick_file">اختر من المكتبة</string>
     <string name="image_description">الصورة المحددة</string>
+    <string name="select_prompt">اختار</string>
 </resources>

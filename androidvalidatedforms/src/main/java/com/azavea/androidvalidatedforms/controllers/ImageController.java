@@ -207,7 +207,10 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
                             Intent.ACTION_PICK,
                             android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                     intent.setType("image/*");
-                    caller.launchIntent(Intent.createChooser(intent, "Select File"), FILE_REQUEST, ImageController.this);
+                    caller.launchIntent(Intent.createChooser(intent,
+                            getContext().getResources().getString(R.string.image_pick_file)),
+                            FILE_REQUEST,
+                            ImageController.this);
                 } else if (items[item].equals(CANCEL_ACTION)) {
                     dialog.dismiss();
                 }
