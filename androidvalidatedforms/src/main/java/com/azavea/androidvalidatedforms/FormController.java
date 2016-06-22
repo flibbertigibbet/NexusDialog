@@ -83,6 +83,16 @@ public class FormController {
             }
 
             @Override
+            public Class getBackingModelClass(String fieldName) {
+                try {
+                    return modelObjectClass.getField(fieldName).getType();
+                } catch (NoSuchFieldException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
             protected Object getBackingValue(String name) {
                 try {
                     return modelObjectClass.getField(name).get(modelObject);

@@ -4,15 +4,19 @@ import android.content.Context;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 
 import com.azavea.androidvalidatedforms.FormController;
+import com.azavea.androidvalidatedforms.FormModel;
 
 /**
  * Represents a field that allows free-form text.
  */
 public class EditTextController extends LabeledFieldController {
+
+    private final String LOG_LABEL = "EditTextCtl";
     private final int editTextId = FormController.generateViewId();
 
     private int inputType;
@@ -159,7 +163,37 @@ public class EditTextController extends LabeledFieldController {
 
             @Override
             public void afterTextChanged(Editable editable) {
-                getModel().setValue(getName(), editText.getText().toString());
+                String editTextString = editText.getText().toString();
+                if (editTextString.isEmpty()) {
+                    editTextString = null;
+                }
+
+                Object value = editTextString;
+
+                try {
+                    Class modelClass = getModel().getBackingModelClass(getName());
+
+                    // allow use of EditText for numeric types
+                    if (editTextString != null && !CharSequence.class.isAssignableFrom(modelClass)) {
+                        if (Integer.class.isAssignableFrom(modelClass)) {
+                            value = Integer.valueOf(editTextString);
+                        } else if (Double.class.isAssignableFrom(modelClass)) {
+                            value = Double.valueOf(editTextString);
+                        } else if (Float.class.isAssignableFrom(modelClass)) {
+                            value = Float.valueOf(editTextString);
+                        } else if (Long.class.isAssignableFrom(modelClass)) {
+                            value = Long.valueOf(editTextString);
+                        } else {
+                            Log.e(LOG_LABEL, "Unidentified edit text backing object class: " + modelClass);
+                            Log.e(LOG_LABEL, "Edit text backing object should be a string or number type.");
+                        }
+                    }
+                } catch (Exception ex) {
+                    Log.e(LOG_LABEL, "Failed to check/cast appropriate type on EditText field " + getName());
+                    ex.printStackTrace();
+                }
+
+                getModel().setValue(getName(), value);
                 setNeedsValidation();
             }
         });

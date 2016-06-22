@@ -2,6 +2,7 @@ package com.azavea.androidvalidatedforms.sample;
 
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -77,6 +78,8 @@ public class RecordFormActivity extends FormWithAppCompatActivity implements For
         truthiness.add("");
         truthiness.add("yes");
         truthiness.add("no");
+
+        section.addElement(new EditTextController(this, "HowMany", "Counting", "", true, InputType.TYPE_CLASS_NUMBER));
 
         section.addElement(new SelectionController(this, "FavoriteColor", "favorite color",
                 false, "Select", colors, colors));
