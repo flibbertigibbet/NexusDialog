@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="cancel">إلغاء</string>
-    <string name="required_field_error_msg">لا يمكن أن يكون منعدم </string>
+    <string name="required_field_error_msg">هو حقل مطلوب%s</string>
     <string name="validation_error_title">مدخل غير صالح</string>
-    <string name="image_take_with_camera">تصوير</string>
+    <string name="image_take_with_camera">التقاط صورة</string>
     <string name="image_picker_button_label">اختيار صورة</string>
-    <string name="image_pick_file">اختر من المكتبة</string>
+    <string name="image_pick_file">اختر من مكتبة الصور</string>
     <string name="image_description">الصورة المحددة</string>
-    <string name="select_prompt">اختار</string>
+    <string name="select_prompt">إختيار</string>
 </resources>
