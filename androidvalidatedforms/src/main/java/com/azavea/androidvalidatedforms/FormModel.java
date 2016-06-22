@@ -39,6 +39,14 @@ public abstract class FormModel extends Fragment {
     public abstract Object getBackingModelObject();
 
     /**
+     * Return the class of the model field object.
+     *
+     * @param name the name of the field to get the class of
+     * @return class of model object holding the data for a field
+     */
+    public abstract Class getBackingModelClass(String name);
+
+    /**
      * Returns the value for the specified field name.
      *
      * @param name  the field name

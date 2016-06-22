@@ -3,6 +3,8 @@ package com.azavea.androidvalidatedforms.sample;
 import java.util.Date;
 import java.util.Set;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.Size;
 
 /**
@@ -21,6 +23,8 @@ public class TestModel {
     public String FavoriteColor;
 
     public String Truthiness;
+
+    public Integer HowMany;
 
     public Date When;
 
