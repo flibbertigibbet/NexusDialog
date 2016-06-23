@@ -9,7 +9,6 @@ import android.view.View;
 import android.widget.EditText;
 
 import com.azavea.androidvalidatedforms.FormController;
-import com.azavea.androidvalidatedforms.FormModel;
 
 /**
  * Represents a field that allows free-form text.
@@ -164,36 +163,7 @@ public class EditTextController extends LabeledFieldController {
             @Override
             public void afterTextChanged(Editable editable) {
                 String editTextString = editText.getText().toString();
-                if (editTextString.isEmpty()) {
-                    editTextString = null;
-                }
-
-                Object value = editTextString;
-
-                try {
-                    Class modelClass = getModel().getBackingModelClass(getName());
-
-                    // allow use of EditText for numeric types
-                    if (editTextString != null && !CharSequence.class.isAssignableFrom(modelClass)) {
-                        if (Integer.class.isAssignableFrom(modelClass)) {
-                            value = Integer.valueOf(editTextString);
-                        } else if (Double.class.isAssignableFrom(modelClass)) {
-                            value = Double.valueOf(editTextString);
-                        } else if (Float.class.isAssignableFrom(modelClass)) {
-                            value = Float.valueOf(editTextString);
-                        } else if (Long.class.isAssignableFrom(modelClass)) {
-                            value = Long.valueOf(editTextString);
-                        } else {
-                            Log.e(LOG_LABEL, "Unidentified edit text backing object class: " + modelClass);
-                            Log.e(LOG_LABEL, "Edit text backing object should be a string or number type.");
-                        }
-                    }
-                } catch (Exception ex) {
-                    Log.e(LOG_LABEL, "Failed to check/cast appropriate type on EditText field " + getName());
-                    ex.printStackTrace();
-                }
-
-                getModel().setValue(getName(), value);
+                getModel().setValue(getName(), getCastValue(editTextString));
                 setNeedsValidation();
             }
         });
@@ -201,11 +171,63 @@ public class EditTextController extends LabeledFieldController {
         return editText;
     }
 
+    /**
+     * Get the value from the text field, cast to the appropriate type for the backing model.
+     *
+     * @param editTextString String input to the EditText field.
+     * @return Object of type modelClass, or null if cast failed
+     */
+    private Object getCastValue(String editTextString) {
+        Object value = editTextString;
+        Class modelClass = getModel().getBackingModelClass(getName());
+
+        if (CharSequence.class.isAssignableFrom(modelClass)) {
+            // if it is a string type, we're done
+            return value != null ? value : "";
+        }
+
+        if (editTextString.isEmpty()) {
+            return null;
+        }
+
+        try {
+            // allow use of EditText for numeric types
+            if (Integer.class.isAssignableFrom(modelClass)) {
+                value = Integer.valueOf(editTextString);
+            } else if (Double.class.isAssignableFrom(modelClass)) {
+                value = Double.valueOf(editTextString);
+            } else if (Float.class.isAssignableFrom(modelClass)) {
+                value = Float.valueOf(editTextString);
+            } else if (Long.class.isAssignableFrom(modelClass)) {
+                value = Long.valueOf(editTextString);
+            } else {
+                Log.e(LOG_LABEL, "Unidentified edit text backing object class: " + modelClass);
+                Log.e(LOG_LABEL, "Edit text backing object should be a string or number type.");
+            }
+        } catch (NumberFormatException ex) {
+            // might happen if user is in middle of entering a value and has only input
+            // a negative sign or decimal point
+            Log.d(LOG_LABEL, "Could not parse '" + editTextString + "' as a number");
+            value = null;
+        } catch (Exception ex) {
+            // will return original string value if type not recognized
+            Log.e(LOG_LABEL, "Failed to check appropriate type on EditText field " + getName());
+            ex.printStackTrace();
+        }
+
+        return value;
+    }
+
     private void refresh(EditText editText) {
         Object value = getModel().getValue(getName());
-        String valueStr = value != null ? value.toString() : "";
-        if (!valueStr.equals(editText.getText().toString())) {
-            editText.setText(valueStr);
+        Object newVal = getCastValue(editText.getText().toString());
+
+        if (value == null && newVal == null) {
+            return;
+        }
+
+        if (value == null || !value.equals(newVal)) {
+            editText.setText(newVal != null ? newVal.toString() : "");
             setNeedsValidation();
         }
     }

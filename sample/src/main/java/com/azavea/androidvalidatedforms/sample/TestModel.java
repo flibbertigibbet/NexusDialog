@@ -24,7 +24,7 @@ public class TestModel {
 
     public String Truthiness;
 
-    public Integer HowMany;
+    public Double HowMany;
 
     public Date When;
 
