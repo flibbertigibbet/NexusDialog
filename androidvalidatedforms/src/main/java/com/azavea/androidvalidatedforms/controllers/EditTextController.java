@@ -219,15 +219,15 @@ public class EditTextController extends LabeledFieldController {
     }
 
     private void refresh(EditText editText) {
-        Object value = getModel().getValue(getName());
-        Object newVal = getCastValue(editText.getText().toString());
+        Object modelVal = getModel().getValue(getName());
+        Object controlVal = getCastValue(editText.getText().toString());
 
-        if (value == null && newVal == null) {
+        if (controlVal == null && modelVal == null) {
             return;
         }
 
-        if (value == null || !value.equals(newVal)) {
-            editText.setText(newVal != null ? newVal.toString() : "");
+        if (controlVal == null || !controlVal.equals(modelVal)) {
+            editText.setText(modelVal != null ? modelVal.toString() : "");
             setNeedsValidation();
         }
     }

@@ -15,7 +15,7 @@ import javax.validation.constraints.Size;
 public class TestModel {
 
     @Size(min=2, max=10)
-    public String FirstName;
+    public String FirstName = "foo";
 
     @Size(min=4, max=30)
     public String LastName;
@@ -24,7 +24,9 @@ public class TestModel {
 
     public String Truthiness;
 
-    public Double HowMany;
+    public Integer HowMany;
+
+    public Double HowMuch;
 
     public Date When;
 
