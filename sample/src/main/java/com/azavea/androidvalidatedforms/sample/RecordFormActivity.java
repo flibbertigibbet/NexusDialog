@@ -79,7 +79,10 @@ public class RecordFormActivity extends FormWithAppCompatActivity implements For
         truthiness.add("yes");
         truthiness.add("no");
 
-        section.addElement(new EditTextController(this, "HowMany", "Counting", "", true,
+        section.addElement(new EditTextController(this, "HowMany", "an int", "", true,
+                InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_SIGNED));
+
+        section.addElement(new EditTextController(this, "HowMuch", "some double", "", true,
                 InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_SIGNED|InputType.TYPE_NUMBER_FLAG_DECIMAL));
 
         section.addElement(new SelectionController(this, "FavoriteColor", "favorite color",
