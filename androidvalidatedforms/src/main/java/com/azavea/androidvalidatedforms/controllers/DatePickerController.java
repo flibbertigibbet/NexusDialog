@@ -1,5 +1,6 @@
 package com.azavea.androidvalidatedforms.controllers;
 
+import java.text.DateFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -20,6 +21,11 @@ import android.widget.EditText;
 import android.widget.TimePicker;
 
 import com.azavea.androidvalidatedforms.FormController;
+import com.github.msarhan.ummalqura.calendar.UmmalquraCalendar;
+import com.github.msarhan.ummalqura.calendar.UmmalquraDateFormatSymbols;
+
+import net.alhazmy13.hijridatepicker.HijriCalendarDialog;
+import net.alhazmy13.hijridatepicker.HijriCalendarView;
 
 /**
  * Represents a field that allows selecting a specific date via a date picker.
@@ -33,8 +39,9 @@ public class DatePickerController extends LabeledFieldController {
     private DatePickerDialog datePickerDialog = null;
     private TimePickerDialog timePickerDialog = null;
     private final SimpleDateFormat displayFormat;
-    private final Calendar calendar;
+    private Calendar calendar;
     private boolean showTimePicker = false;
+    private boolean useHijri = false;
     private long maxDateTime = 0;
 
     /**
@@ -49,7 +56,17 @@ public class DatePickerController extends LabeledFieldController {
     public DatePickerController(Context ctx, String name, String labelText, boolean isRequired, SimpleDateFormat displayFormat) {
         super(ctx, name, labelText, isRequired);
         this.displayFormat = displayFormat;
-        this.calendar = Calendar.getInstance(Locale.getDefault());
+
+        // default to use Hijri Ummalqura calendar if system language is Arabic or location is Saudi Arabia
+        Locale locale = Locale.getDefault();
+        this.useHijri = locale.getLanguage().startsWith("ar") || locale.getCountry().startsWith("SA");
+
+        if (useHijri) {
+            this.calendar = getUmmalquraCalendar();
+        } else {
+            this.calendar = Calendar.getInstance(locale);
+        }
+
         this.calendar.setTimeZone(displayFormat.getTimeZone());
     }
 
@@ -92,6 +109,37 @@ public class DatePickerController extends LabeledFieldController {
 
         this(ctx, name, labelText, isRequired, displayFormat);
         this.showTimePicker = showTimePicker;
+    }
+
+    /**
+     * Call to set calendar and date-picker to Hijri.
+     */
+    public void setUseHijri() {
+        if (useHijri) {
+            return; // already using Hijri date picker; nothing to do
+        }
+
+        useHijri = true;
+        getUmmalquraCalendar();
+    }
+
+    /**
+     * Set up the calendar for Hijri date symbols and formatting.
+     *
+     * @return Hijri calendar
+     */
+    public Calendar getUmmalquraCalendar() {
+        Locale locale = Locale.getDefault();
+        calendar = new UmmalquraCalendar(locale);
+        calendar.setTime(new Date());
+        displayFormat.setCalendar(calendar);
+        // explicitly set the date format symbols; otherwise months display as incorrect Gregorian
+        UmmalquraDateFormatSymbols ummalquara = new UmmalquraDateFormatSymbols();
+        DateFormatSymbols symbols = new DateFormatSymbols(locale);
+        symbols.setMonths(ummalquara.getMonths());
+        symbols.setShortMonths(ummalquara.getShortMonths());
+        displayFormat.setDateFormatSymbols(symbols);
+        return calendar;
     }
 
     /**
@@ -149,30 +197,66 @@ public class DatePickerController extends LabeledFieldController {
 
             calendar.setTime(date);
 
-            datePickerDialog = new DatePickerDialog(context, new OnDateSetListener() {
-                @Override
-                public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                    calendar.set(year, monthOfYear, dayOfMonth);
-                    getModel().setValue(getName(), calendar.getTime());
-                    editText.setText(displayFormat.format(calendar.getTime()));
+            if (useHijri) {
+                // custom Hijri date-picker
+                HijriCalendarDialog.Builder builder = new HijriCalendarDialog.Builder(context)
+                        .setMode(HijriCalendarDialog.Mode.Hijri)
+                        .setOnDateSetListener(new HijriCalendarView.OnDateSetListener() {
+                            @Override
+                            public void onDateSet(int year, int monthOfYear, int dayOfMonth) {
+                                calendar.set(year, monthOfYear, dayOfMonth);
+                                getModel().setValue(getName(), calendar.getTime());
+                                editText.setText(displayFormat.format(calendar.getTime()));
+                            }
+                        });
 
+                if (Locale.getDefault().getLanguage().startsWith("ar")) {
+                    builder.setUILanguage(HijriCalendarDialog.Language.Arabic);
+                } else {
+                    builder.setUILanguage(HijriCalendarDialog.Language.English);
                 }
-            }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
 
-            datePickerDialog.setOnDismissListener(new OnDismissListener() {
-                @Override
-                public void onDismiss(DialogInterface dialog) {
-                    datePickerDialog = null;
-                    if (showTimePicker) {
-                        showTimePickerDialog(context, editText);
+                HijriCalendarView view = builder.build();
+
+                view.setOnDismissListener(new OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        datePickerDialog = null;
+                        if (showTimePicker) {
+                            showTimePickerDialog(context, editText);
+                        }
                     }
-                }
-            });
+                });
 
-            if (maxDateTime > 0) {
-                datePickerDialog.getDatePicker().setMaxDate(maxDateTime);
+                view.show();
+
+            } else {
+                // standard system Gregorian date-picker
+                datePickerDialog = new DatePickerDialog(context, new OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                        calendar.set(year, monthOfYear, dayOfMonth);
+                        getModel().setValue(getName(), calendar.getTime());
+                        editText.setText(displayFormat.format(calendar.getTime()));
+
+                    }
+                }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+
+                datePickerDialog.setOnDismissListener(new OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        datePickerDialog = null;
+                        if (showTimePicker) {
+                            showTimePickerDialog(context, editText);
+                        }
+                    }
+                });
+
+                if (maxDateTime > 0) {
+                    datePickerDialog.getDatePicker().setMaxDate(maxDateTime);
+                }
+                datePickerDialog.show();
             }
-            datePickerDialog.show();
         }
     }
 

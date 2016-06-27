@@ -93,6 +93,7 @@ public class RecordFormActivity extends FormWithAppCompatActivity implements For
 
         DatePickerController datePickerCtl = new DatePickerController(this, "When", "Some date", true, true);
         datePickerCtl.setMaxDateToNow();
+        datePickerCtl.setUseHijri();
 
         section.addElement(datePickerCtl);
 
