@@ -1,14 +1,18 @@
 package com.azavea.androidvalidatedforms.controllers;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -37,11 +41,13 @@ import java.util.Locale;
  * Created by kathrynkillebrew on 2/1/16.
  */
 public class ImageController<T extends Context & FormActivityBase> extends LabeledFieldController
-    implements IntentResultListener, ResizeImageTask.ResizeImageCallback {
+    implements IntentResultListener, FormActivityBase.ExternalWriteRequest, ResizeImageTask.ResizeImageCallback {
 
     private static final SimpleDateFormat IMAGE_DATE_FORMAT = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
 
     private static final String LOG_LABEL = "ImageControl";
+
+    public static final int EXTERNAL_STORAGE_WRITE_REQUEST = 11235;
 
     private ImageView imageView;
 
@@ -159,11 +165,65 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
     }
 
     /**
+     * For APIs 23+, it is necessary to prompt for permissions at runtime.
+     * Check if we have permission to access the image directory, and if not, ask.
+     *
+     * https://developer.android.com/training/permissions/requesting.html
+     *
+     * @return true if permission already granted
+     */
+    private boolean checkFilePermissions(Context context) {
+        int permissionCheck = ContextCompat.checkSelfPermission(context,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            T caller = callingActivity.get();
+            if (caller == null) {
+                Log.w(LOG_LABEL, "Calling activity is gone; not going to prompt for write permission");
+                return false;
+            }
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale((Activity)caller,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+
+                Log.d(LOG_LABEL, "TODO: ask nicely");
+
+                //////////////////////////////////////
+                // TODO: tell activity to prompt instead
+                caller.setExternalWriteRequestListener(this);
+                // No explanation needed, we can request the permission.
+                ActivityCompat.requestPermissions((Activity)caller,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        EXTERNAL_STORAGE_WRITE_REQUEST);
+                //////////////////////////////////////////
+
+            } else {
+                caller.setExternalWriteRequestListener(this);
+                // No explanation needed, we can request the permission.
+                ActivityCompat.requestPermissions((Activity)caller,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        EXTERNAL_STORAGE_WRITE_REQUEST);
+            }
+
+            return false;
+        } else {
+            return true; // permission already granted
+        }
+    }
+
+    /**
      * Display dialog to set image either by taking a new picture with the camera, or picking
      * an existing image from the gallery.
      */
     private void promptForImage() {
         Context context = getContext();
+        if (!checkFilePermissions(context)) {
+            return;
+        }
         final CharSequence[] items = {TAKE_PHOTO_PROMPT, SELECT_PHOTO_FILE_PROMPT, CANCEL_ACTION};
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(context.getString(R.string.image_picker_button_label));
@@ -298,6 +358,15 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
             Log.e(LOG_LABEL, "No external media mounted or emulated");
             currentPhotoPath = null;
             return null;
+        }
+    }
+
+    @Override
+    public void gotResult(boolean granted) {
+        if (granted) {
+            promptForImage();
+        } else {
+            Log.w(LOG_LABEL, "User denied permission to external storage");
         }
     }
 }

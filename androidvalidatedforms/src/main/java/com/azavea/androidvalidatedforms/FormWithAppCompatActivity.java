@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
@@ -13,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager.LayoutParams;
 
+import com.azavea.androidvalidatedforms.controllers.ImageController;
 import com.azavea.androidvalidatedforms.tasks.DisplayFormTask;
 
 import java.io.File;
@@ -24,6 +26,8 @@ import java.util.HashMap;
  * like the Activity to be based on the standard Android <code>Activity</code>, you can use {@link FormActivity}
  */
 public abstract class FormWithAppCompatActivity extends AppCompatActivity implements FormActivityBase {
+
+    private static final String LOG_LABEL = "AppCompatFormActivity";
     private static final String MODEL_BUNDLE_KEY = "android_validated_forms_model";
     private FormController formController;
     private View progressBar;
@@ -32,9 +36,46 @@ public abstract class FormWithAppCompatActivity extends AppCompatActivity implem
     private boolean formReady;
     private FormReadyListener formReadyListener;
     private HashMap<Integer, WeakReference<IntentResultListener>> intentListeners;
+    private WeakReference<ExternalWriteRequest> externalWriteRequestListener;
 
     // form layout may be overridden, if it contains the expected components with matching IDs
     protected int formLayout = R.layout.form_activity;
+
+    @Override
+    public void setExternalWriteRequestListener(ExternalWriteRequest listener) {
+        this.externalWriteRequestListener = new WeakReference<>(listener);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+
+        ExternalWriteRequest listener = externalWriteRequestListener.get();
+        if (listener == null) {
+            Log.w(LOG_LABEL, "External write permissions listener has gone; not sending result");
+            return;
+        }
+
+        switch (requestCode) {
+            case ImageController.EXTERNAL_STORAGE_WRITE_REQUEST: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    Log.d(LOG_LABEL, "User granted permission to write external storage");
+                    listener.gotResult(true);
+
+                } else {
+                    Log.e(LOG_LABEL, "User denied permission to write external storage!");
+                    listener.gotResult(false);
+                }
+                return;
+            }
+
+            default:
+                Log.w(LOG_LABEL, "Got unrecognized permission request result for code " + String.valueOf(requestCode));
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
