@@ -2,6 +2,7 @@ buildscript {
     repositories {
         jcenter()
         mavenCentral()
+        maven { url "https://jitpack.io" }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:2.1.2'
@@ -26,7 +27,7 @@ repositories {
     mavenCentral()
 }
 
-version "1.1.15"
+version "1.1.16"
 group = "com.azavea.androidvalidatedforms"
 
 android {
@@ -102,8 +103,15 @@ dependencies {
 
     compile 'javax.validation:validation-api:1.1.0.Final'
 
+    // Android support library
     compile 'com.android.support:support-v4:23.4.0'
     compile 'com.android.support:appcompat-v7:23.4.0'
+
+    // Islamic calendar date picker
+    compile('com.github.azavea:HijriDatePicker:1.3.9') {
+        exclude module: 'example'
+        exclude module: 'app'
+    }
 }
 
 task sourcesJar(type: Jar) {

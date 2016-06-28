@@ -45,6 +45,12 @@
 -keepclassmembers class com.azavea.androidvalidatedforms.** { *; }
 -keepnames class com.azavea.androidvalidatedforms.**
 
+# keep calendar
+-keep class com.github.msarhan.ummalqura.** { *; }
+-keep interface com.github.msarhan.ummalqura.** { *; }
+-keepclassmembers class com.github.msarhan.ummalqura.** { *; }
+-keepnames class com.github.msarhan.ummalqura.**
+
 # keep annotation classes so they do not get obfuscated, even if not referenced directly
 -keep class com.fasterxml.jackson.annotation.** { public *; }
 -keep class com.google.gson.annotations.** { *; }

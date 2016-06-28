@@ -39,6 +39,12 @@
 -renamesourcefileattribute SourceFile
 -repackageclasses ''
 
+# keep calendar
+-keep class com.github.msarhan.ummalqura.** { *; }
+-keep interface com.github.msarhan.ummalqura.** { *; }
+-keepclassmembers class com.github.msarhan.ummalqura.** { *; }
+-keepnames class com.github.msarhan.ummalqura.**
+
 # keep things in this app
 -keep class com.azavea.androidvalidatedforms.** { *; }
 -keep interface com.azavea.androidvalidatedforms.** { *; }
