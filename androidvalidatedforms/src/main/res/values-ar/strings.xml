@@ -8,4 +8,5 @@
     <string name="image_pick_file">اختر من مكتبة الصور</string>
     <string name="image_description">الصورة المحددة</string>
     <string name="select_prompt">إختيار</string>
+    <string name="external_storage_rationale">وصول وحدات التخزين الخارجية اللازمة لاستخدام الصور</string>
 </resources>

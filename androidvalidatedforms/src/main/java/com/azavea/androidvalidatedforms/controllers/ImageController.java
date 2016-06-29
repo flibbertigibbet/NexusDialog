@@ -21,6 +21,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.azavea.androidvalidatedforms.FormActivityBase;
 import com.azavea.androidvalidatedforms.IntentResultListener;
@@ -186,28 +187,19 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
             if (ActivityCompat.shouldShowRequestPermissionRationale((Activity)caller,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
 
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-
-                Log.d(LOG_LABEL, "TODO: ask nicely");
-
-                //////////////////////////////////////
-                // TODO: tell activity to prompt instead
-                caller.setExternalWriteRequestListener(this);
-                // No explanation needed, we can request the permission.
-                ActivityCompat.requestPermissions((Activity)caller,
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        EXTERNAL_STORAGE_WRITE_REQUEST);
-                //////////////////////////////////////////
-
-            } else {
-                caller.setExternalWriteRequestListener(this);
-                // No explanation needed, we can request the permission.
-                ActivityCompat.requestPermissions((Activity)caller,
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        EXTERNAL_STORAGE_WRITE_REQUEST);
+                // App requested permission previously but was denied; show a message
+                // before asking again.
+                Log.w(LOG_LABEL, "Repeating external write access permission request");
+                Toast.makeText(context, context.getText(R.string.external_storage_rationale), Toast.LENGTH_LONG).show();
             }
+
+            // tell calling activity to notify when the response received
+            caller.setExternalWriteRequestListener(this);
+
+            // go ask for permission
+            ActivityCompat.requestPermissions((Activity)caller,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    EXTERNAL_STORAGE_WRITE_REQUEST);
 
             return false;
         } else {
