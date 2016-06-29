@@ -16,6 +16,12 @@ public interface FormActivityBase extends ValidationTask.ValidationCallback {
         void formReadyCallback();
     }
 
+    interface ExternalWriteRequest {
+        void gotResult(boolean granted);
+    }
+
+    void setExternalWriteRequestListener(ExternalWriteRequest listener);
+
     FormModel getModel();
 
     FormController getFormController();
