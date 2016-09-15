@@ -1,8 +1,8 @@
 package com.azavea.androidvalidatedforms;
 
 import android.content.Intent;
-import android.os.Bundle;
 
+import com.azavea.androidvalidatedforms.FormModelEnclosure.FormModel;
 import com.azavea.androidvalidatedforms.tasks.ValidationTask;
 
 /**

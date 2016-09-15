@@ -3,6 +3,8 @@ package com.azavea.androidvalidatedforms;
 import android.content.Context;
 import android.view.View;
 
+import com.azavea.androidvalidatedforms.FormModelEnclosure.FormModel;
+
 /**
  * The base class for all form elements, such as text fields, buttons, sections, etc. Each {@code FormElementController}
  * is referred by a name and has an associated {@link FormModel}.

@@ -7,7 +7,7 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.azavea.androidvalidatedforms.FormElementController;
-import com.azavea.androidvalidatedforms.FormModel;
+import com.azavea.androidvalidatedforms.FormModelEnclosure.FormModel;
 import com.azavea.androidvalidatedforms.R;
 import com.azavea.androidvalidatedforms.validations.HibernateValidatorInstance;
 import com.azavea.androidvalidatedforms.validations.HibernationError;
