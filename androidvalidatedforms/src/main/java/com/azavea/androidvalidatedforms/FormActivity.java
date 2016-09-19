@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager.LayoutParams;
 
 import com.azavea.androidvalidatedforms.controllers.ImageController;
+import com.azavea.androidvalidatedforms.FormModelEnclosure.FormModel;
 import com.azavea.androidvalidatedforms.tasks.DisplayFormTask;
 
 import java.lang.ref.WeakReference;

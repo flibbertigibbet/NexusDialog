@@ -13,6 +13,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -61,7 +62,8 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
     private final String CANCEL_ACTION;
 
     private WeakReference<T> callingActivity;
-    private Uri currentPhotoPath;
+    private Uri currentPhotoContentUri;
+    private Uri currentPhotoFilePath;
 
     public ImageController(T ctx, String name, String labelText, boolean isRequired) {
         super(ctx, name, labelText, isRequired);
@@ -110,7 +112,7 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
 
     /**
      * Use this method to set image path on model instead of calling
-     * {@link com.azavea.androidvalidatedforms.FormModel#setValue(String, Object)} directly.
+     * {@link com.azavea.androidvalidatedforms.FormModelEnclosure.FormModel#setValue(String, Object)} directly.
      *
      * Override to use backing model that is not itself a String.
      *
@@ -122,7 +124,7 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
 
     /**
      * Use this method to retrieve image path on model instead of calling
-     * {@link com.azavea.androidvalidatedforms.FormModel#getValue(String)} directly.
+     * {@link com.azavea.androidvalidatedforms.FormModelEnclosure.FormModel#getValue(String)} directly.
      *
      * Override to use backing model that is not itself a String.
      *
@@ -228,7 +230,8 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
                     return;
                 }
 
-                currentPhotoPath = null;
+                currentPhotoContentUri = null;
+                currentPhotoFilePath = null;
 
                 if (items[item].equals(TAKE_PHOTO_PROMPT)) {
                     Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -243,7 +246,9 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
                             // without EXTRA_OUTPUT set
 
                             if (photoFile != null) {
-                                intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+                                intent.putExtra(MediaStore.EXTRA_OUTPUT, currentPhotoContentUri);
+                                intent.setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                                intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                             }
                             caller.launchIntent(intent, CAMERA_REQUEST, ImageController.this);
                         } catch (IOException e) {
@@ -282,22 +287,24 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
     public void gotIntentResult(int requestCode, int resultCode, Intent resultData) {
         if (resultCode != Activity.RESULT_OK) {
             Log.w(LOG_LABEL, "intent result not ok; doing nothing");
+            Log.w(LOG_LABEL, "intent result: " + resultCode);
             return;
         }
 
         if (requestCode == CAMERA_REQUEST) {
 
-            if (currentPhotoPath != null) {
-                // camera saved image to external media
-                Log.d(LOG_LABEL, "full image saved to " + currentPhotoPath.getPath());
+            Log.d(LOG_LABEL, "got camera request");
 
+            if (currentPhotoContentUri != null && currentPhotoFilePath != null) {
+                // camera saved image to external media
                 // store image path to model
-                setModelValue(currentPhotoPath.getPath());
+                setModelValue(currentPhotoFilePath.getPath());
                 setNeedsValidation();
 
                 // update image gallery to include the new pic
                 Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                mediaScanIntent.setData(currentPhotoPath);
+                mediaScanIntent.setData(currentPhotoFilePath);
+                mediaScanIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 getContext().sendBroadcast(mediaScanIntent);
             }
         } else if (requestCode == FILE_REQUEST) {
@@ -343,12 +350,14 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
             // Create a media file name
             String timeStamp = IMAGE_DATE_FORMAT.format(new Date());
             File imageFile = File.createTempFile("IMG_" + timeStamp + "_", ".jpg", mediaStorageDir);
-            currentPhotoPath = Uri.fromFile(imageFile);
+            currentPhotoContentUri = FileProvider.getUriForFile(getContext(), "com.azavea.androidvalidatedforms.fileprovider", imageFile);
+            currentPhotoFilePath = Uri.fromFile(imageFile);
 
             return imageFile;
         } else {
             Log.e(LOG_LABEL, "No external media mounted or emulated");
-            currentPhotoPath = null;
+            currentPhotoContentUri = null;
+            currentPhotoFilePath = null;
             return null;
         }
     }

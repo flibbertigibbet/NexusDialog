@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 
 import com.azavea.androidvalidatedforms.controllers.FormSectionController;
 import com.azavea.androidvalidatedforms.controllers.LabeledFieldController;
+import com.azavea.androidvalidatedforms.FormModelEnclosure.FormModel;
 import com.azavea.androidvalidatedforms.validations.PerFieldValidationErrorDisplay;
 import com.azavea.androidvalidatedforms.validations.ValidationError;
 import com.azavea.androidvalidatedforms.validations.ValidationErrorDisplay;
@@ -21,10 +22,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <code>FormController</code> is the main class that manages the form elements of NexusDialog. It provides simple APIs
  * to quickly create and manage form fields. Typically, an instance of this class is created within an Activity or Fragment.
  * <p/>
- * The form's data is backed by a model represented by {@link FormModel}, which provides a generic interface to access
- * the data. Form elements use the model to retrieve current field values and set them upon user input. By default,
- * <code>FormController</code> uses a default Map-based model keyed by the element's names. You can also use a custom
- * implementation of a <code>FormModel</code> if desired.
+ * The form's data is backed by a model represented by {@link FormModel},
+ * which provides a generic interface to access the data. Form elements use the model to retrieve current field values
+ * and set them upon user input. By default, <code>FormController</code> uses a default Map-based model keyed by the
+ * element's names. You can also use a custom implementation of a <code>FormModel</code> if desired.
  */
 public class FormController {
     private final List<FormSectionController> sectionControllers = new ArrayList<FormSectionController>();
@@ -67,48 +68,7 @@ public class FormController {
      * @return FormModel that gets and sets publicly accessible fields on the model class
      */
     private FormModel createFormModel() {
-        final Object modelObject = getModelObject();
-        final Class modelObjectClass = modelObject.getClass();
-
-        return new FormModel() {
-            @Override
-            protected void setBackingValue(String name, Object newValue) {
-                try {
-                    modelObjectClass.getField(name).set(modelObject, newValue);
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                } catch (NoSuchFieldException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public Class getBackingModelClass(String fieldName) {
-                try {
-                    return modelObjectClass.getField(fieldName).getType();
-                } catch (NoSuchFieldException e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-
-            @Override
-            protected Object getBackingValue(String name) {
-                try {
-                    return modelObjectClass.getField(name).get(modelObject);
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                } catch (NoSuchFieldException e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-
-            @Override
-            public Object getBackingModelObject() {
-                return modelObject;
-            }
-        };
+        return FormObjectModel.newInstance(getModelObject());
     }
 
     /**
