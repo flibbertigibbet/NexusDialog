@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
@@ -246,7 +247,18 @@ public class ImageController<T extends Context & FormActivityBase> extends Label
                             // without EXTRA_OUTPUT set
 
                             if (photoFile != null) {
-                                intent.putExtra(MediaStore.EXTRA_OUTPUT, currentPhotoContentUri);
+                                // With Nougat, the camera intent will crash unless given a
+                                // content URI; with earlier versions, it will crash if given
+                                // a content URI instead of a file path.
+                                // see file system permission changes here:
+                                // https://developer.android.com/about/versions/nougat/android-7.0-changes.html
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                    Log.d(LOG_LABEL, "on API >= 24; using content URI");
+                                    intent.putExtra(MediaStore.EXTRA_OUTPUT, currentPhotoContentUri);
+                                } else {
+                                    Log.d(LOG_LABEL, "on API < 24; using file URI");
+                                    intent.putExtra(MediaStore.EXTRA_OUTPUT, currentPhotoFilePath);
+                                }
                                 intent.setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                                 intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                             }
